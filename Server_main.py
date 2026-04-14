@@ -2,7 +2,7 @@ import socket
 
 def server():
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    soc.bind(("127.0.0.1", 2600))
+    soc.bind(("0.0.0.0", 2600))
     soc.listen(1)
     print("Server is ready and listening")
     while True:
