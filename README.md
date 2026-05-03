@@ -18,7 +18,11 @@ A lightweight Command & Control (C2) proof-of-concept featuring an asynchronous 
 
 ## 📸 Screenshot
 
-*(Note pour toi : ajoute ton image ici sur GitHub avec le format `![Demo](lien_vers_ton_image.png)`)*
+
+
+https://github.com/user-attachments/assets/3ac12574-9533-48ed-930c-400e308809d0
+
+
 
 ## 🧠 What did the project teach me?
 
