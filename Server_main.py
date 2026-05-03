@@ -40,9 +40,6 @@ def server():
 
 
 def send_message(message, infected_list):
-    message = message.split(" ")
-    target = message[0]
-    final_mess = " ".join(message[1:])
     parts = message.strip().split(" ", 1)
     
     
