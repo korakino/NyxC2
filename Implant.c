@@ -31,7 +31,7 @@ int main(){
     // set server's variables
     server.sin_family = AF_INET;
     server.sin_port = htons(2600);
-    server.sin_addr.s_addr = inet_addr("192.168.1.146");
+    server.sin_addr.s_addr = inet_addr("10.92.230.240");
 
     // Check the connexion
     if (connect(soc, (struct sockaddr *)&server, sizeof(server)) == SOCKET_ERROR) {
