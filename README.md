@@ -77,5 +77,5 @@ x86_64-w64-mingw32-gcc implant.c -o implant.exe -lws2_32 -mwindows -s
 ## 🗺️ Roadmap (Future Improvements)
 
 * [ ] Implement secure file Upload/Download functionality.
-* [ ] Add basic XOR encryption for **network traffic** (Payload is already obfuscated).
+* [x] Add basic XOR encryption for **network traffic** (Payload is already obfuscated).
 * [x] Create a custom interactive shell prompt on the server side to avoid retyping IPs.
