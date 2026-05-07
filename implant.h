@@ -6,3 +6,4 @@
 #define DEFAULT_BUFLEN 1024
 
 
+char* decode(char* message, char key, int lenght);
