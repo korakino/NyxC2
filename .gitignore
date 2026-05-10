@@ -1,0 +1,8 @@
+# Fichiers compilés
+*.exe
+*.o
+*.out
+
+# Python files (cache)
+__pycache__/
+*.pyc
