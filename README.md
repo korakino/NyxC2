@@ -35,6 +35,15 @@ https://github.com/user-attachments/assets/3ac12574-9533-48ed-930c-400e308809d0
     * **State & Session Management:** Architecting a robust session manager mapping raw network socket objects to custom user aliases via Python dictionaries, including graceful disconnect handling.
     * **I/O Multiplexing:** Implementation of a high-performance server using the `select` module for single-threaded concurrency.
     * **The Dispatcher Pattern:** Development of a non-blocking event loop handling inbound connections, operator commands (`sys.stdin`), and data reception simultaneously.
+ 
+* **Advanced Defensive Evasion (Dynamic API Loading)**
+    * **IAT Evasion:** Concealing critical Windows API calls (like `CreateProcessA` and `WSAStartup`) from the Import Address Table by resolving them dynamically at runtime using `GetModuleHandleA`, `LoadLibraryA`, and `GetProcAddress`.
+    * **Function Pointers in C:** Defining precise `typedef` signatures to safely cast and execute raw memory addresses as standard Windows API functions.
+    * **Static vs. Dynamic Analysis (API Hooking):** Understanding the limitations of static evasion. Realizing that while XOR + IAT evasion bypasses initial AV file scans, EDRs (like MS Defender) use in-memory API Hooking to catch behavioral signatures (e.g., piping network sockets into a hidden `cmd.exe`).
+
+* **Operational Security (OpSec) & Repository Management**
+    * **Clean Version Control:** Implementing strict `.gitignore` rules to prevent accidental leaks of compiled malicious binaries (`.exe`) to public repositories.
+    * **Safe Artifact Handling:** Understanding the importance of separating development environments from public portfolios, ensuring the repository remains a safe, educational space without distributing weaponized code.
 
 * **Low-Level Network Programming (C & WinAPI)**
     * **Socket Orchestration:** Initializing Winsock library (`WSAStartup`) and managing TCP connections via `sockaddr_in`.
@@ -44,6 +53,8 @@ https://github.com/user-attachments/assets/3ac12574-9533-48ed-930c-400e308809d0
 * **Git & GitHub workflow (command line)**
     * Professional version control: Writing descriptive commit messages and managing multi-language repositories via CLI.
     * Conflict Resolution: Mastering synchronization between local and remote branches (Force Push, Reset, Merge).
+ 
+
 
 ---
 
