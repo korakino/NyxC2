@@ -1,8 +1,9 @@
-# Fichiers compilés
 *.exe
 *.o
 *.out
-
-# Python files (cache)
+output/
+out/
+build/
+.vscode/
 __pycache__/
 *.pyc
