@@ -61,7 +61,7 @@ def server():
                         nom_cible = name
                         break
                         
-                new_data = elem.recv(4096).decode('cp850', errors='replace').strip
+                new_data = elem.recv(4096).decode('cp850', errors='replace').strip()
                 if new_data:
                     
                     
