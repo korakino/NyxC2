@@ -18,7 +18,12 @@ def server():
         
         #parse r_sock
         for pars in r_sock:
-            print("=> parsing:" + pars.recv(4096).decode('cp850', errors='replace'))
+            if pars == soc:
+                pass
+            elif pars == sys.stdin:
+                pass
+            else:
+                print("=> parsing:" + pars.recv(4096).decode('cp850', errors='replace'))
         
         
         
