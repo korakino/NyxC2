@@ -80,7 +80,7 @@ x86_64-w64-mingw32-gcc implant.c -o implant.exe -lws2_32 -mwindows -s
 ## 🗺️ Roadmap (Future Improvements)
 
 * [x] **Custom Interactive Shell:** Create a prompt (`NyxC2 >`) on the server side with data sanitization.
-* [] **Payload Obfuscation:** XOR string encryption and IAT Unhooking.
+* [ ] **Payload Obfuscation:** XOR string encryption and IAT Unhooking.
 * [ ] **Network Traffic Encryption:** Implement AES or TLS/SSL to encrypt TCP communications and prevent Blue Team packet sniffing.
 * [ ] **Data Exfiltration:** Add secure `upload` and `download` commands for file transfers.
 * [ ] **Beaconing & Sleep:** Refactor the implant to sleep and check in periodically instead of maintaining a constant, suspicious TCP connection.
