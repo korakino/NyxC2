@@ -12,7 +12,18 @@ def server():
     print("waiting for connection")
     while True:
         r_sock, w_sock, x_sock = select.select(server_list, [], [])
-        print(r_sock)
+        
+        
+        
+        
+        #parse r_sock
+        for pars in r_sock:
+            print("=> parsing:" + pars.recv(4096).decode('cp850', errors='replace'))
+        
+        
+        
+        
+        
         for elem in r_sock:
             if elem == soc:
                 (clientsocket, addressguest) = soc.accept()
