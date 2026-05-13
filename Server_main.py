@@ -62,18 +62,27 @@ def server():
                     if sock == elem:
                         nom_cible = name
                         break
-                        
-                new_data = elem.recv(4096).decode('cp850', errors='replace').strip()
-                if ">" in new_data:
-                    print("")
-                elif new_data:
-                    print(f"\n[answer from {nom_cible}] :\n {new_data}")
-                else:
-                    print(f"connection lost with {nom_cible}")
-                    server_list.remove(elem)
+                try:
+                    new_data = elem.recv(4096)
+                    if not new_data:
+                        print(f"connection lost with {nom_cible}")
+                        server_list.remove(elem)
+                        if nom_cible in dict_ip:
+                            del dict_ip[nom_cible]
+                        elem.close()
+                    else:
+                        new_data = new_data.decode('cp850', errors='replace').strip()
+                        if ">" in new_data:
+                            new_data = ""
+                            
+                        if new_data:
+                            print(f"\n[answer from {nom_cible}] :\n {new_data}")
+                except ConnectionResetError:
+                    print(f"connection brutally interrupted with {nom_cible}")
                     if nom_cible in dict_ip:
-                        del dict_ip[nom_cible]
+                            del dict_ip[nom_cible]
                     elem.close()
+                    
                 
 
     soc.close()
