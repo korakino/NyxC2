@@ -62,7 +62,7 @@ def server():
                         break
                         
                 new_data = elem.recv(4096).decode('cp850', errors='replace').strip()
-                if new_data:
+                if new_data and not ">" in new_data:
                     
                     
                     print(f"\n[answer from {nom_cible}] :\n {new_data}")
