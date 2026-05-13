@@ -62,7 +62,7 @@ int main(){
     // set server's variables
     server.sin_family = AF_INET;
     server.sin_port = htons(2600);
-    server.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server.sin_addr.s_addr = inet_addr("192.168.1.146");
 
     myConnect(soc, (struct sockaddr *)&server, sizeof(server));
 
