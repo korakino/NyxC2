@@ -57,9 +57,13 @@ def server():
                             print("mc rename <old> <new> : Rename a target's alias/IP")
                             print("mc connect <target>   : Test connection to a specific target")
                             print("mc help               : Display this help menu")
+                            print("mc kill               : close script")
                             print("<target|*> <command>  : Send a command to target(s). * for all targets")
                             print("------------------------------------\n")
                     
+                        case "kill":
+                            soc.close()
+                            return
                     
                     
                     
