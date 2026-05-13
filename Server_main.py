@@ -81,6 +81,7 @@ def server():
                     print(f"connection brutally interrupted with {nom_cible}")
                     if nom_cible in dict_ip:
                             del dict_ip[nom_cible]
+                    server_list.remove(elem)
                     elem.close()
                     
                 
