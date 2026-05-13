@@ -66,6 +66,8 @@ def server():
                     
                     
                     print(f"\n[answer from {nom_cible}] :\n {new_data}")
+                elif ">" in new_data:
+                    pass
                 else:
                     print(f"connection lost with {nom_cible}")
                     server_list.remove(elem)
