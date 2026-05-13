@@ -13,6 +13,7 @@ def server():
     while True:
         r_sock, w_sock, x_sock = select.select(server_list, [], [])
         for elem in r_sock:
+            print(r_sock)
             if elem == soc:
                 (clientsocket, addressguest) = soc.accept()
                 print(f"Connection from {addressguest}")
