@@ -95,6 +95,28 @@ int main(){
         return;
     }
 
+    BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO cipherInfo;
+    BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO_INIT(&cipherInfo);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     
 
