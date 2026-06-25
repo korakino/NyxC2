@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <bcrypt.h>
-#include <winsock2.h> //for windows computers
+#include <bcrypt.h> //for windows computers
+#include <winsock2.h> 
 #include <windows.h>
 #define DEFAULT_BUFLEN 1024
 
