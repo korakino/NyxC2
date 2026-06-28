@@ -1,12 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <bcrypt.h> //for windows computers
-#include <winsock2.h> 
+#include <winsock2.h>
 #include <windows.h>
+#include <bcrypt.h>
 #define DEFAULT_BUFLEN 1024
 
-
+char* decode(char* message, char key, int lenght);
+int recv_all(SOCKET sock,char *buff,int len);
+int send_all(SOCKET sock,char *buff,int len);
 
 
 
