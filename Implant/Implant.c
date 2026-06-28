@@ -155,7 +155,7 @@ int main()
         return 0;
     }
 
-    FILE *pipe;
+    FILE *pipe = NULL;
     int kill = 1;
     int checker;
     while (kill == 1)
@@ -203,7 +203,6 @@ int main()
     {
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
     }
-    _pclose(pipe);
     return 0;
 }
 
