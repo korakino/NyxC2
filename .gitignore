@@ -1,8 +1,0 @@
-*.o
-*.out
-output/
-out/
-build/
-.vscode/
-__pycache__/
-*.pyc

