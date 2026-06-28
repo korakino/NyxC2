@@ -201,8 +201,12 @@ int main()
     }
 
     // cleanup
-    closesocket(soc);
-    WSACleanup();
+    if (kill == 0)
+    {
+        closesocket(soc);
+        WSACleanup();
+    }
+
     if (aesKey)
     {
         BCryptDestroyKey(aesKey);
