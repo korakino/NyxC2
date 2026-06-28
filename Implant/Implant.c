@@ -165,7 +165,7 @@ int main(){
     int kill = 1;
     int checker;
     while (kill == 1){
-        checker = recv_all(soc, rcvbuffer, 4);
+        checker = recv_all(soc, rcvbuffer, 512);
     if (checker <= 0) return 1; //error in recv_all
     
 
