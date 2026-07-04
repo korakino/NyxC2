@@ -63,7 +63,7 @@ def server():
                             print("------------------------------------\n")
                     
                         case "kill":
-                            target = order.split(" ")[1]
+                            target = input("who to kill : ")
                             
                             
                             send_message(target + "#", dict_ip)
