@@ -160,14 +160,14 @@ int main()
     int checker;
     while (kill == 1)
     {
-        checker = recv(soc, rcvbuffer, 4, 0);
+        checker = recv_all(soc, rcvbuffer, 4);
         if (checker <= 0)
             return 1; // error in recv_all
         unsigned int cmdlen = (unsigned char)rcvbuffer[0] |
                               ((unsigned char)rcvbuffer[1] << 8) |
                               ((unsigned char)rcvbuffer[2] << 16) |
                               ((unsigned char)rcvbuffer[3] << 24);
-        recv(soc, rcvbuffer, cmdlen, 0);
+        recv_all(soc, rcvbuffer, cmdlen);
         rcvbuffer[cmdlen] = '\0';
 
         if (rcvbuffer[0] == '#')
@@ -179,7 +179,7 @@ int main()
             {
                 // Command failed to execute
                 const char *error_msg = "ERROR: Failed to execute command\n";
-                if (send(soc, (char *)error_msg, (int)strlen(error_msg), 0) <= 0)
+                if (send_all(soc, (char *)error_msg, (int)strlen(error_msg), 0) <= 0)
                     return 1;
             }
             else
@@ -188,8 +188,8 @@ int main()
                 int send_result;
                 while (fgets(buf, sizeof(buf), pipe) != NULL)
                 {
-                    // send_result = send_all(soc, buf, (int)strlen(buf));
-                    send_result = send(soc, buf, (int)strlen(buf), 0);
+                    send_result = send_all(soc, buf, (int)strlen(buf));
+                    // send_result = send(soc, buf, (int)strlen(buf), 0);
                     if (send_result <= 0)
                     {
                         _pclose(pipe);
