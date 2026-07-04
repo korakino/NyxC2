@@ -143,7 +143,7 @@ int main()
 
     server.sin_family = AF_INET;
     server.sin_port = htons(2600);
-    server.sin_addr.s_addr = inet_addr("192.168.1.146");
+    server.sin_addr.s_addr = inet_addr("10.23.141.240");
 
     if (myConnect(soc, (struct sockaddr *)&server, sizeof(server)) != 0)
     {
