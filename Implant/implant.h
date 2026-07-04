@@ -9,7 +9,7 @@
 char* decode(char* message, char key, int lenght);
 int recv_all(SOCKET sock,char *buff,int len);
 int send_all(SOCKET sock,char *buff,int len);
-
+int encrypt_message(BCRYPT_KEY_HANDLE aesKey, const BYTE *nonce, int nonce_len, const BYTE *plaintext, int plaintext_len, BYTE *ciphertext, int ciphertext_buffer_len, int *ciphertext_len, BYTE *tag, int tag_len);
 
 
 // Signature for WSAStartup
