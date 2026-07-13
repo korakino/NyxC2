@@ -19,6 +19,7 @@ int main()
     SOCKADDR_IN server;
     STARTUPINFO sinfo;
     PROCESS_INFORMATION pinfo;
+    int rsaUsed = 0;
 
     // AES initialisation
     BCRYPT_ALG_HANDLE aesAlgorithm = NULL;
@@ -108,7 +109,21 @@ int main()
 
 
     // RSA initialisation
+    BCRYPT_ALG_HANDLE rsaAlgorithm = NULL;
+    BCRYPT_KEY_HANDLE rsaKey = NULL;
 
+
+    status = BCryptOpenAlgorithmProvider(&rsaAlgorithm, BCRYPT_RSA_ALGORITHM, NULL, 0);
+    if (!BCRYPT_SUCCESS(status))
+    {
+        return 0;
+    }
+    status = BCryptImportKeyPair(
+        rsaAlgorithm,
+        rsaKey,
+        BCRYPT_RSAPUBLIC_BLOB,
+        
+    );
 
 
 
@@ -245,6 +260,10 @@ int main()
     if (aesAlgorithm)
     {
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
+    }
+    if (rsaAlgorithm)
+    {
+        BCryptCloseAlgorithmProvider(rsaAlgorithm, 0);
     }
     return 0;
 }
