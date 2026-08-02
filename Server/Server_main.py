@@ -3,6 +3,7 @@ import select
 import sys
 import struct
 
+
 def server():
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     soc.bind(("0.0.0.0", 2600))
