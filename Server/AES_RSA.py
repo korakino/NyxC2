@@ -17,15 +17,15 @@ def rsa_key_setup():
     
     
     #usable public_key to send messages
-    pem = public_key.public_bytes(
-   encoding=serialization.Encoding.PEM,
-   format=serialization.PublicFormat.SubjectPublicKeyInfo
-)   
-    return private_key,pem
+    der = public_key.public_bytes(
+    encoding=serialization.Encoding.DER,
+    format=serialization.PublicFormat.SubjectPublicKeyInfo
+)
+    return private_key,der
 
 
 def rsa_decryption(private_key, ciphertext):
-    plaintext = private_key.decrypt(
+    return private_key.decrypt(
     ciphertext,
     padding.OAEP(
         mgf=padding.MGF1(algorithm=hashes.SHA256()),
@@ -33,7 +33,6 @@ def rsa_decryption(private_key, ciphertext):
         label=None
     )
 )
-    return 
 
 
 def aes_encrypt(key : bytes, plaintext : str):
