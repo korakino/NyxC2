@@ -5,6 +5,33 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 import os
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+import struct
+
+
+def BCRYPT_RSAPUBLIC_BLOB(public_key):
+    public_numbers = public_key.public_numbers()
+
+    modulus = public_numbers.n.to_bytes(
+        (public_numbers.n.bit_length() + 7) // 8,
+        "big",
+    )
+    exponent = public_numbers.e.to_bytes(
+        (public_numbers.e.bit_length() + 7) // 8,
+        "big",
+    )
+
+    header = struct.pack(
+        "<LLLLLL",
+        0x31415352,
+        public_numbers.n.bit_length(),
+        len(exponent),
+        len(modulus),
+        0,
+        0,
+    )
+
+    return header + exponent + modulus
+
 
 
 def rsa_key_setup():
@@ -14,14 +41,11 @@ def rsa_key_setup():
     key_size=2048,
 )
     public_key = private_key.public_key()
+
+    blob = BCRYPT_RSAPUBLIC_BLOB(public_key)
+
     
-    
-    #usable public_key to send messages
-    der = public_key.public_bytes(
-    encoding=serialization.Encoding.DER,
-    format=serialization.PublicFormat.SubjectPublicKeyInfo
-)
-    return private_key,der
+    return private_key,blob
 
 
 def rsa_decryption(private_key, ciphertext):
@@ -33,6 +57,12 @@ def rsa_decryption(private_key, ciphertext):
         label=None
     )
 )
+
+
+
+
+
+
 
 
 def aes_encrypt(key : bytes, plaintext : str):

