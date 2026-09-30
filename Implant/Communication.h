@@ -7,6 +7,11 @@
 #define DEFAULT_BUFLEN 1024
 
 
+char* decode(char* message, char key, int lenght);
+int recv_all(SOCKET sock,char *buff,int len);
+int send_all(SOCKET sock,char *buff,int len);
+
+
 char *decode(char *message, char key, int lenght)
 {
     for (int i = 0; i < lenght; i++)

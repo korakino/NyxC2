@@ -271,6 +271,12 @@ int main()
     BCryptDestroyKey(rsaKey);
     rsaKey = NULL;
 
+    
+
+
+
+
+
     // Main receive loop: receive encrypted command packets, decrypt them with AES-GCM, execute shell commands,
     // and send the command output back encrypted after the first RSA-encrypted AES key response.
     FILE *pipe = NULL;
