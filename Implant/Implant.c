@@ -170,7 +170,7 @@ int main()
 
     server.sin_family = AF_INET;
     server.sin_port = htons(2600);
-    server.sin_addr.s_addr = inet_addr("192.168.1.145");
+    server.sin_addr.s_addr = inet_addr("10.115.224.240");
 
     // Establish TCP connection to the server before performing the RSA handshake.
     // The server must send its public-key blob only after connection is established.
