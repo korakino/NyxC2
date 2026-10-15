@@ -44,6 +44,7 @@ def server():
                 if not addressguest in dict_ip:
                     # addressguest contains (IP, port); only the IP is used as
                     # the default name displayed in the operator console.
+                    print("connected")
                     dict_ip[addressguest[0]] = (clientsocket, True, None)
                     
                     
