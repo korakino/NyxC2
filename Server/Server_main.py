@@ -45,8 +45,14 @@ def server():
                     # addressguest contains (IP, port); only the IP is used as
                     # the default name displayed in the operator console.
                     dict_ip[addressguest[0]] = (clientsocket, True, None)
-                    clientsocket.sendall(
-                        struct.pack("<I", len(public_key)) + public_key
+                    
+                    
+                    
+                    
+                    
+                    
+                    clientsocket.send(
+                        struct.pack("<I", len(public_key) + public_key)
                     )
 
             elif elem == sys.stdin:
