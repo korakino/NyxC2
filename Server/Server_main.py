@@ -48,12 +48,12 @@ def server():
                     dict_ip[addressguest[0]] = (clientsocket, True, None)
                     
                     
+                    length = len(public_key)
+                    header = struct.pack("<I", length)
                     
                     
-                    
-                    
-                    clientsocket.send(
-                        struct.pack("<I", len(public_key) + public_key)
+                    clientsocket.sendall(
+                        header + public_key
                     )
 
             elif elem == sys.stdin:
