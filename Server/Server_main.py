@@ -127,12 +127,9 @@ def server():
                         break
                 try:
 
-                    try:
-                        length_bytes = elem.recv(4)
-                        length = struct.unpack("<I", length_bytes)[0]
-                        frame = elem.recv(length)
-                    except Exception: 
-                        pass
+                    length_bytes = elem.recv(4)
+                    length = struct.unpack("<I", length_bytes)[0]
+                    frame = elem.recv(length)
 
                     type_byte = frame[0]
                     ciphertext = frame[1:]
