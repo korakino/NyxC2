@@ -22,7 +22,7 @@ def BCRYPT_RSAPUBLIC_BLOB(public_key):
 
     header = struct.pack(
         "<LLLLLL",
-        0x31415352,
+        0x31415352,  # RSA1
         public_numbers.n.bit_length(),
         len(exponent),
         len(modulus),
@@ -33,40 +33,32 @@ def BCRYPT_RSAPUBLIC_BLOB(public_key):
     return header + exponent + modulus
 
 
-
 def rsa_key_setup():
-    #setting up rsa encryption
+    # setting up rsa encryption
     private_key = rsa.generate_private_key(
-    public_exponent=65537,
-    key_size=2048,
-)
+        public_exponent=65537,
+        key_size=2048,
+    )
     public_key = private_key.public_key()
 
     blob = BCRYPT_RSAPUBLIC_BLOB(public_key)
 
-    
-    return private_key,blob
+    return private_key, blob
 
 
 def rsa_decryption(private_key, ciphertext):
     return private_key.decrypt(
-    ciphertext,
-    padding.OAEP(
-        mgf=padding.MGF1(algorithm=hashes.SHA256()),
-        algorithm=hashes.SHA256(),
-        label=None
+        ciphertext,
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None,
+        ),
     )
-)
 
 
+def aes_encrypt(key: bytes, plaintext: str):
 
-
-
-
-
-
-def aes_encrypt(key : bytes, plaintext : str):
-    
     nonce = os.urandom(12)
     cipher = Cipher(algorithms.AES(key), modes.GCM(nonce))
     encryptor = cipher.encryptor()
@@ -74,15 +66,14 @@ def aes_encrypt(key : bytes, plaintext : str):
     payload = nonce + encryptor.tag + ct
     return payload
 
-def aes_decrypt(key : bytes, payload: bytes):
-    
+
+def aes_decrypt(key: bytes, payload: bytes):
+
     nonce = payload[:12]
     tag = payload[12:28]
     ciphertext = payload[28:]
-    
+
     decryptor = Cipher(algorithms.AES(key), modes.GCM(nonce, tag)).decryptor()
     plaintext = decryptor.update(ciphertext) + decryptor.finalize()
-    
-    return plaintext
-    
 
+    return plaintext
