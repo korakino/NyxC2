@@ -49,6 +49,7 @@ def server():
                     print("connected")
                     dict_ip[addressguest[0]] = (clientsocket, True, None)
                     
+                    print(public_key)
                     
                     length = len(public_key)
                     header = struct.pack("<I", length)
