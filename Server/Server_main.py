@@ -41,6 +41,8 @@ def server():
                 print(f"Connection from {addressguest}")
                 if not clientsocket in server_list:
                     server_list.append(clientsocket)
+                    
+                    
                 if not addressguest in dict_ip:
                     # addressguest contains (IP, port); only the IP is used as
                     # the default name displayed in the operator console.
@@ -149,6 +151,8 @@ def server():
                         if nom_cible in dict_ip:
                             del dict_ip[nom_cible]
                         elem.close()
+                        
+                        
                     else:
                         # Decode command output using the Windows code page
                         # commonly used by console applications. Invalid bytes
