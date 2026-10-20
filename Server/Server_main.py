@@ -130,8 +130,16 @@ def server():
                 try:
 
                     length_bytes = elem.recv(4)
-                    length = struct.unpack("<I", length_bytes)[0]
+                    
+                    
+                    length = struct.unpack("<I", length_bytes)[0] #error when target is disconnected
+                    
+                    
+                    
                     frame = elem.recv(length)
+                    
+                    
+                    
 
                     type_byte = frame[0]
                     ciphertext = frame[1:]
