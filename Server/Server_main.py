@@ -49,11 +49,12 @@ def server():
                     print("connected")
                     dict_ip[addressguest[0]] = (clientsocket, True, None)
                     
-                    print(public_key)
+                    print(str(public_key))
                     
                     length = len(public_key)
                     header = struct.pack("<I", length)
-                    
+                    print(type(header))
+                    print(type(public_key))
                     
                     clientsocket.sendall(
                         header + public_key
