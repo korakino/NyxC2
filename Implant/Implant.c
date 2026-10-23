@@ -289,6 +289,7 @@ int main()
         send_all(soc, (char *)rsaEncrypted, (int)rsaEncryptedLen) <= 0)
     {
         closesocket(soc);
+        printf("error here");
         return 1;
     }
 
