@@ -131,7 +131,7 @@ def server():
                         break
                 try:
 
-                    length_bytes = elem.recv(4)
+                    length_bytes = elem.recv(5)
                     
                     
                     length = struct.unpack("<I", length_bytes)[0] #error when target is disconnected
