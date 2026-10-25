@@ -133,11 +133,9 @@ def server():
 
                     length_bytes = elem.recv(5)
                     
+                    print(length_bytes)
                     
                     length = struct.unpack("<I", length_bytes)[0] #error when target is disconnected
-                    
-                    
-                    
                     frame = elem.recv(length)
                     
                     
@@ -146,6 +144,9 @@ def server():
                     type_byte = frame[0]
                     ciphertext = frame[1:]
                     plaintext = ""
+
+                    print(ciphertext)
+
 
                     match type_byte:
                         case 0x01:
