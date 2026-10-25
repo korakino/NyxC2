@@ -55,8 +55,20 @@ int main()
         return 0;
     }
 
-    status = BCryptGenRandom(aesAlgorithm, pbSecret, cbSecret, 0);
-    status = BCryptGenRandom(NULL, nonce, sizeof(nonce), 0);
+    status = BCryptGenRandom(NULL, pbSecret, cbSecret, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+    if (!BCRYPT_SUCCESS(status))
+    {
+        BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
+        return 0;
+    }
+
+    status = BCryptGenRandom(NULL, nonce, sizeof(nonce), BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+    if (!BCRYPT_SUCCESS(status))
+    {
+        BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
+        return 0;
+    }
+    
     status = BCryptSetProperty(
         aesAlgorithm,
         BCRYPT_CHAINING_MODE,
@@ -293,8 +305,6 @@ int main()
         return 1;
     }
 
-
-    
     rsaUsed = 1;
     printf("Cle AES chiffree envoyee au serveur !\n");
     BCryptDestroyKey(rsaKey);
