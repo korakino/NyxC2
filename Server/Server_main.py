@@ -134,8 +134,8 @@ def server():
                     length_bytes = elem.recv(5)
                     
                     # print(length_bytes)
-                    
-                    length = struct.unpack("<I", length_bytes[:4])[0] #error when target is disconnected
+                    if len(length_bytes) >= 5:
+                        length = struct.unpack("<I", length_bytes[:4])[0] #error when target is disconnected
                     frame = elem.recv(length)
                     
                     
@@ -145,7 +145,7 @@ def server():
                     ciphertext = frame[1:]
                     plaintext = ""
 
-                    print("ciphertext" + ciphertext)
+                    print("ciphertext" + str(ciphertext))
 
 
                     match type_byte:
@@ -157,7 +157,7 @@ def server():
                         case 0x02:
                             plaintext = aes_decrypt(dict_ip[nom_cible][2], ciphertext)
                             
-                    print("plaintext" + plaintext)
+                    print("plaintext" + str(plaintext))
 
                     if length_bytes == 0:
                         print(f"connection lost with {nom_cible}")
