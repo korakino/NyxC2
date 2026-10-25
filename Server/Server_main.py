@@ -135,17 +135,17 @@ def server():
                     
                     # print(length_bytes)
                     if len(length_bytes) >= 5:
-                        length = struct.unpack("<I", length_bytes[:4])[0] #error when target is disconnected
-                        type_byte = length_bytes[5]
+                        length = struct.unpack("<I", length_bytes[:3])[0] #error when target is disconnected
+                        type_byte = length_bytes[4]
+                        ciphertext = elem.recv(length - 1)
                     else:
                         type_byte = 0x00
-                    frame = elem.recv(length)
+                        ciphertext = b""
                     
                     
                     
 
-                    
-                    ciphertext = frame[1:]
+
                     plaintext = ""
 
                     print("ciphertext" + str(ciphertext))
