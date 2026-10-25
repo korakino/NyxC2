@@ -124,7 +124,7 @@ def server():
             else:
                 # This event belongs to a connected client socket. Find its
                 # current display name so received output can be identified.
-                nom_cible = "Inconnu"
+                nom_cible = "unknown"
                 for name, sock in dict_ip.items():
                     if sock[0] == elem:
                         nom_cible = name
