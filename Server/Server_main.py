@@ -135,7 +135,7 @@ def server():
                     
                     print(length_bytes)
                     
-                    length = struct.unpack("<I", length_bytes)[0] #error when target is disconnected
+                    length = struct.unpack("<IB", length_bytes)[0] #error when target is disconnected
                     frame = elem.recv(length)
                     
                     
