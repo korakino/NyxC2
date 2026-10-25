@@ -145,7 +145,7 @@ def server():
                     ciphertext = frame[1:]
                     plaintext = ""
 
-                    print(ciphertext)
+                    print("ciphertext" + ciphertext)
 
 
                     match type_byte:
@@ -154,6 +154,8 @@ def server():
                             dict_ip[nom_cible] = (elem, True, aes_key)
                         case 0x02:
                             plaintext = aes_decrypt(dict_ip[nom_cible][2], ciphertext)
+                            
+                    print("plaintext" + plaintext)
 
                     if length_bytes == 0:
                         print(f"connection lost with {nom_cible}")
@@ -168,7 +170,7 @@ def server():
                         # Decode command output using the Windows code page
                         # commonly used by console applications. Invalid bytes
                         # are replaced so decoding cannot stop the event loop.
-                        new_data = new_data.decode("cp850", errors="replace").strip()
+                        # new_data = new_data.decode("cp850", errors="replace").strip()
 
                         if length_bytes != 4:
                             type_byte = frame[0]
