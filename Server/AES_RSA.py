@@ -62,7 +62,7 @@ def aes_encrypt(key: bytes, plaintext: str):
     nonce = os.urandom(12)
     cipher = Cipher(algorithms.AES(key), modes.GCM(nonce))
     encryptor = cipher.encryptor()
-    ct = encryptor.update(bytes(f"{plaintext}")) + encryptor.finalize()
+    ct = encryptor.update(plaintext.encode("utf-8")) + encryptor.finalize()
     payload = nonce + encryptor.tag + ct
     return payload
 

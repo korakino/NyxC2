@@ -320,6 +320,8 @@ int main()
     int checker;
     char received_message[512];
     int received_message_len = 0;
+
+    printf("begin the loop !");
     while (kill == 1)
     {
         checker = recv_all(soc, rcvbuffer, 4);
