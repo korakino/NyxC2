@@ -236,6 +236,7 @@ def send_message(message, infected_dict):
             # expected by the client's receive loop.
             try:
                 encrypted_mess = aes_encrypt(infected_dict[target][2], final_mess)
+                print(infected_dict[target][0])
                 infected_dict[target][0].send(header + encrypted_mess)
             except Exception as e:
                 print(f"[!] Erreur d'envoi à {target}\n{e}")
