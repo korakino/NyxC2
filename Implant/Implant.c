@@ -58,6 +58,7 @@ int main()
     status = BCryptGenRandom(NULL, pbSecret, cbSecret, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
     if (!BCRYPT_SUCCESS(status))
     {
+        printf("pb line 61");
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
         return 0;
     }
@@ -65,10 +66,11 @@ int main()
     status = BCryptGenRandom(NULL, nonce, sizeof(nonce), BCRYPT_USE_SYSTEM_PREFERRED_RNG);
     if (!BCRYPT_SUCCESS(status))
     {
+        printf("pb line 69");
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
         return 0;
     }
-    
+
     status = BCryptSetProperty(
         aesAlgorithm,
         BCRYPT_CHAINING_MODE,
