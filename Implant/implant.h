@@ -4,7 +4,7 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <bcrypt.h>
-#define DEFAULT_BUFLEN 1024
+#define DEFAULT_BUFLEN 4096
 
 // Signature for WSAStartup
 typedef int (WSAAPI *pWSAStartup)(
