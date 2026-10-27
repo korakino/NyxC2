@@ -342,7 +342,6 @@ int main()
         if (cmdlen < 28 || cmdlen > 4096)
         {
             printf("[FATAL] \n");
-            return 1;
         }
 
         recv_all(soc, received_message, cmdlen);
