@@ -336,14 +336,26 @@ int main()
         // cmdlen is the binary ciphertext length, not a string length.
         recv_all(soc, received_message, cmdlen);
 
-        if (rsaUsed != 0)
+        BYTE *recv_nonce = (BYTE *)received_message;
+        BYTE *recv_tag = (BYTE *)(received_message + 12);
+        BYTE *recv_ciphertext = (BYTE *)(received_message + 28);
+        int recv_ciphertext_len = cmdlen - 28;
+
+        int decrypted_len = 0;
+
+        if (!decrypt_message(aesKey,
+                             recv_nonce, 12,
+                             recv_ciphertext, recv_ciphertext_len,
+                             (BYTE *)rcvbuffer, sizeof(rcvbuffer), &decrypted_len,
+                             recv_tag, 16))
         {
-            decrypt_message(aesKey, nonce, sizeof(nonce), (BYTE *)received_message, (int)cmdlen,
-                            rcvbuffer, sizeof(rcvbuffer), &cmdlen,
-                            tag, sizeof(tag), &authInfo);
+            printf("error decrypting message from server !\n");
+            return 1;
         }
 
+        cmdlen = decrypted_len;
         rcvbuffer[cmdlen] = '\0';
+        printf("decrypted command : %s\n", rcvbuffer);
 
         if (rcvbuffer[0] == '#')
             kill = 0; // kill program if serveur say #

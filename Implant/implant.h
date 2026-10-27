@@ -6,9 +6,6 @@
 #include <bcrypt.h>
 #define DEFAULT_BUFLEN 1024
 
-int encrypt_message(BCRYPT_KEY_HANDLE aesKey, const BYTE *nonce, int nonce_len, const BYTE *plaintext, int plaintext_len, BYTE *ciphertext, int ciphertext_buffer_len, int *ciphertext_len, BYTE *tag, int tag_len);
-int decrypt_message(BCRYPT_KEY_HANDLE aesKey, const BYTE *nonce, int nonce_len, const BYTE *plaintext, int plaintext_len, BYTE *ciphertext, int ciphertext_buffer_len, int *ciphertext_len, BYTE *tag, int tag_len, BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO *pPaddingInfo);
-
 // Signature for WSAStartup
 typedef int (WSAAPI *pWSAStartup)(
     WORD wVersionRequired, 
