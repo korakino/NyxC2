@@ -325,8 +325,11 @@ int main()
     while (kill == 1)
     {
         checker = recv_all(soc, rcvbuffer, 4);
-        if (checker <= 0)
-            return 1; // error in recv_all
+        if (checker <= 0){
+            printf("error line 329");
+            // return 1; // error in recv_all
+        }
+            
 
         unsigned int cmdlen = (unsigned char)rcvbuffer[0] |
                               ((unsigned char)rcvbuffer[1] << 8) |
@@ -350,7 +353,7 @@ int main()
                              recv_tag, 16))
         {
             printf("error decrypting message from server !\n");
-            return 1;
+            // return 1;
         }
 
         cmdlen = decrypted_len;
