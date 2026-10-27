@@ -325,11 +325,11 @@ int main()
     while (kill == 1)
     {
         checker = recv_all(soc, rcvbuffer, 4);
-        if (checker <= 0){
+        if (checker <= 0)
+        {
             printf("error line 329");
             // return 1; // error in recv_all
         }
-            
 
         unsigned int cmdlen = (unsigned char)rcvbuffer[0] |
                               ((unsigned char)rcvbuffer[1] << 8) |
@@ -337,6 +337,14 @@ int main()
                               ((unsigned char)rcvbuffer[3] << 24);
         // Receive the encrypted command payload and decrypt it using AES-GCM.
         // cmdlen is the binary ciphertext length, not a string length.
+
+        printf("[DEBUG] (cmdlen) : %u octets\n", cmdlen);
+        if (cmdlen < 28 || cmdlen > 4096)
+        {
+            printf("[FATAL] \n");
+            return 1;
+        }
+
         recv_all(soc, received_message, cmdlen);
 
         BYTE *recv_nonce = (BYTE *)received_message;
