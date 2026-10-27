@@ -397,23 +397,26 @@ int main()
 
                     // Send message format: [4-byte total length] [1-byte type=0x02] [AES-encrypted output]
                     // Total length includes the type byte
-                    ULONG totalLen = ciphertext_len + 1;
-                    char msg_header[5];
-                    msg_header[0] = (char)(totalLen & 0xFF);
-                    msg_header[1] = (char)((totalLen >> 8) & 0xFF);
-                    msg_header[2] = (char)((totalLen >> 16) & 0xFF);
-                    msg_header[3] = (char)((totalLen >> 24) & 0xFF);
-                    msg_header[4] = 0x02; // Type: AES-encrypted data
+                    ULONG totalLen = 1 + 12 + 16 + ciphertext_len;
+                    sndbuffer[0] = (char)(totalLen & 0xFF);
+                    sndbuffer[1] = (char)((totalLen >> 8) & 0xFF);
+                    sndbuffer[2] = (char)((totalLen >> 16) & 0xFF);
+                    sndbuffer[3] = (char)((totalLen >> 24) & 0xFF);
+                    sndbuffer[4] = 0x02; // Type: AES-encrypted data
 
-                    send_result = send_all(soc, msg_header, sizeof(msg_header));
-                    if (send_result > 0)
-                        send_result = send_all(soc, result_buf, ciphertext_len);
+                    // create message (nonce + tag + ciphertext)
+                    memcpy(&sndbuffer[5], nonce, 12);
+                    memcpy(&sndbuffer[17], tag, 16);
+                    memcpy(&sndbuffer[33], result_buf, ciphertext_len);
+
+                    send_result = send_all(soc, sndbuffer, 4 + totalLen);
 
                     // send_result = send(soc, buf, (int)strlen(buf), 0);
                     if (send_result <= 0)
                     {
                         _pclose(pipe);
-                        return 1; // Connection lost, exit
+                        printf("error line 418");
+                        // return 1; // Connection lost, exit
                     }
                 }
                 _pclose(pipe);
