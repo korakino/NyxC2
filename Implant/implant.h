@@ -34,5 +34,3 @@ typedef BOOL (WINAPI *pCreateProcessA)(
     BOOL, DWORD, LPVOID, LPCSTR, LPSTARTUPINFOA, LPPROCESS_INFORMATION
 );
 
-char* decode(char* message, char key, int lenght);
-

