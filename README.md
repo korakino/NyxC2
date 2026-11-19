@@ -12,14 +12,14 @@ A lightweight Command & Control (C2) proof-of-concept featuring an asynchronous 
 
 ## 🚀 Features
 
-* **Asynchronous Server:** Handles multiple concurrent connections using the `select` module without blocking.
+* **Asynchronous Server:** Handles multiple concurrent connections using the `select` module without blocking (V1).
 * **Interactive Operator Shell:** Custom `NyxC2 >` prompt featuring real-time data parsing to filter Windows command echoes, handle TCP fragmentation, and provide a clean Red Team operator experience.
 * **Resilient Session Management:** Automatic detection of dead sockets and graceful state cleanup to prevent server crashes during brutal target disconnections. Assign human-readable aliases to IP addresses (`mc rename`).
 * **Targeted Execution:** Send commands to a specific implant by Alias/IP, or broadcast to all targets using `*`.
 * **AV Evasion & Stealth:** Bypasses major AV engines using XOR string obfuscation and dynamically loaded Windows APIs (IAT unhooking). Compiled to run as a background process (no console window).
 * **Process Redirection:** Redirects `cmd.exe` standard streams (In/Out/Err) directly to the network socket.
-* **AES encoding** encode with AES GCM to keep instruction secret.
-* **Protocol of communication** add a header to give the lenght of instructions to implant.
+* **AES encoding** encode with AES GCM to keep instruction secret (V2).
+* **Protocol of communication** add a header to give the lenght of instructions to implant [5 bytes header][1 byte of type][encoded instruction].
 
 ## 📸 Screenshot
 
@@ -82,8 +82,8 @@ x86_64-w64-mingw32-gcc implant.c -o implant.exe -lws2_32 -mwindows -s
 ## 🗺️ Roadmap (Future Improvements)
 
 * [x] **Custom Interactive Shell:** Create a prompt (`NyxC2 >`) on the server side with data sanitization.
-* [ ] **Payload Obfuscation:** XOR string encryption and IAT Unhooking.
-* [ ] **Network Traffic Encryption:** Implement AES or TLS/SSL to encrypt TCP communications and prevent Blue Team packet sniffing.
+* [x] **Payload Obfuscation:** XOR string encryption and IAT Unhooking.
+* [x] **Network Traffic Encryption:** Implement AES or TLS/SSL to encrypt TCP communications and prevent Blue Team packet sniffing.
 * [ ] **Data Exfiltration:** Add secure `upload` and `download` commands for file transfers.
 * [ ] **Beaconing & Sleep:** Refactor the implant to sleep and check in periodically instead of maintaining a constant, suspicious TCP connection.
 * [ ] **Persistence Mechanisms:** Add functionality to write to Windows Registry Keys or create Scheduled Tasks to survive reboots.
