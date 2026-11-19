@@ -18,6 +18,8 @@ A lightweight Command & Control (C2) proof-of-concept featuring an asynchronous 
 * **Targeted Execution:** Send commands to a specific implant by Alias/IP, or broadcast to all targets using `*`.
 * **AV Evasion & Stealth:** Bypasses major AV engines using XOR string obfuscation and dynamically loaded Windows APIs (IAT unhooking). Compiled to run as a background process (no console window).
 * **Process Redirection:** Redirects `cmd.exe` standard streams (In/Out/Err) directly to the network socket.
+* **AES encoding** encode with AES GCM to keep instruction secret.
+* **Protocol of communication** add a header to give the lenght of instructions to implant.
 
 ## 📸 Screenshot
 
